@@ -20,11 +20,11 @@ filter_page_url = 'https://onlinebusiness.icbc.com/salvage/webServlet/Search?for
 
 # Database configuration
 db_config = {
-    'host': '192.168.1.221',        # Replace with your database host
-    'user': 'icbc_scrapper',             # Replace with your database user
-    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
-    'database': 'icbc_scrapper_DB',   # Replace with your database name
-    'port': 3306
+    'host': 'localhost',        # Replace with your database host
+    'user': 'root',             # Replace with your database user
+    'password': '',             # Replace with your database password
+    'database': 'scrap_data',   # Replace with your database name
+    'port': 3307
 }
 
 # Setup Chrome options
@@ -32,13 +32,11 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
-chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
-
 driver = None
 
 class LoginDetails(BaseModel):
-    username: str = "B073902"
-    password: str = "MUJEB786"
+    username: str
+    password: str
 
 def connect_to_database():
     try:
@@ -163,6 +161,7 @@ def insert_data_to_database(data, images):
 
 def login(username, password):
     global driver
+    chrome_options.binary_location = "/usr/bin/chromium-browser" 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     try:
         driver.get(login_page_url)
