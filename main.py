@@ -19,7 +19,7 @@ filter_page_url = 'https://onlinebusiness.icbc.com/salvage/webServlet/Search?for
 
 # Database configuration
 db_config = {
-    'host': '192.168.1.221',        # Replace with your database host
+    'host': 'localhost',        # Replace with your database host
     'user': 'icbc_scrapper',             # Replace with your database user
     'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
     'database': 'icbc_scrapper_DB',   # Replace with your database name
