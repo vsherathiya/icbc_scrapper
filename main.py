@@ -32,7 +32,7 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
-chrome_options.binary_location = "/home/icbc_scrapper/opt/google/chrome/google-chrome"  # Adjust this path if necessary
+chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
 
 driver = None
 
@@ -163,7 +163,7 @@ def insert_data_to_database(data, images):
 
 def login(username, password):
     global driver
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver = webdriver.Chrome(options=chrome_options)
     try:
         driver.get(login_page_url)
         print("Opened login page.")
