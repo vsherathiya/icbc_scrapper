@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import mysql.connector
@@ -10,7 +10,6 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import base64
 import requests
-import time
 
 app = FastAPI()
 
@@ -176,14 +175,12 @@ def login(username, password):
         submit_button = driver.find_element(By.NAME, 'submit')
         submit_button.click()
         print("Clicked submit button.")
-        print(3)  # Wait for login to complete
 
         # Handle session expiry and restart if necessary
         try:
             restart_link = driver.find_element(By.LINK_TEXT, 'Restart Salvage Web Session')
             restart_link.click()
             print("Clicked restart link.")
-            print(3)  # Wait for session restart to complete
         except Exception as e:
             print("No session restart needed.")
         
@@ -221,7 +218,7 @@ def download_image_as_base64(image_url, cookies):
     try:
         print(f"Downloading image from URL: {image_url}")
         session = requests.Session()
-        image_url = image_url.replace('size=1','size=2')
+        image_url = image_url.replace('size=1', 'size=2')
         # Add Selenium cookies to the session
         for cookie in cookies:
             session.cookies.set(cookie['name'], cookie['value'])
@@ -256,7 +253,6 @@ def scrape_page(page_num, cookies):
         image_elements = image_table.find_elements(By.TAG_NAME, 'img')
         images = [img.get_attribute('src') for img in image_elements if 'AssetImageAction' in img.get_attribute('src')]
         images = [download_image_as_base64(img, cookies) for img in images]
-        # print(images)
         details['Images'] = images
         page_data.append(details)
         insert_data_to_database(page_data, images)
@@ -304,24 +300,23 @@ def get_next_page_url(first_page, rel):
         return ''
 
 def close_browser():
-    driver.quit()
-    print("Closed the browser.")
+    if driver:
+        driver.quit()
+        print("Closed the browser.")
 
 @app.post("/Scrape")
-async def login_endpoint(login_details: LoginDetails, background_tasks: BackgroundTasks):
-    
+async def login_endpoint(login_details: LoginDetails):
+    global driver
     try:
         login(login_details.username, login_details.password)
         cookies = driver.get_cookies()
-        background_tasks.add_task(navigate_and_submit_filter, cookies)
-        return {"message": "Login initiated, scraping in background."}
+        navigate_and_submit_filter(cookies)
+        return {"message": "Scraping completed."}
     except Exception as e:
-        print("Exception",e)
+        print("Exception", e)
+        raise HTTPException(status_code=500, detail="An error occurred during scraping.")
     finally:
-        if driver:
-            close_browser()
-
-
+        close_browser()
 
 if __name__ == "__main__":
     import uvicorn
