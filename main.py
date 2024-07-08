@@ -347,7 +347,7 @@ def scrape_page(page_num, cookies):
         import os
         data['hid_allimages'] = [str(img[0])for img in  images]
         file_name = f"{data['stock_number']}.json"
-        file_path = os.path.join("data", file_name)
+        file_path = os.path.join("data/d", file_name)
         
         if not os.path.exists("data/d"):
             os.makedirs("data/d")
@@ -355,7 +355,7 @@ def scrape_page(page_num, cookies):
         with open(file_path, 'w') as json_file:
             json.dump(data, json_file, indent=4)
         print(data)
-        call_api(data) 
+        call_api(json.dumps(data)) 
         
         insert_data_to_database(page_data, images)
         print(f"Page {page_num} data appended to database.")
