@@ -11,6 +11,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 import base64
 import requests
 import time
+import os
+import subprocess
 
 app = FastAPI()
 
@@ -21,24 +23,34 @@ filter_page_url = 'https://onlinebusiness.icbc.com/salvage/webServlet/Search?for
 # Database configuration
 db_config = {
     'host': '192.168.1.221',        # Replace with your database host
-    'user': 'icbc_scrapper',             # Replace with your database user
-    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
-    'database': 'icbc_scrapper_DB',   # Replace with your database name
+    'user': 'icbc_scrapper',        # Replace with your database user
+    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',  # Replace with your database password
+    'database': 'icbc_scrapper_DB', # Replace with your database name
     'port': 3306
 }
-
-# Setup Chrome options
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--disable-gpu")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.binary_location = "/var/www/html/nexuslinkdev.com/icbc_scrapper/chrome/"  # Adjust this path if necessary
-
-driver = None
 
 class LoginDetails(BaseModel):
     username: str = "B073902"
     password: str = "MUJEB786"
+
+def install_chrome():
+    try:
+        subprocess.run(['sudo', 'apt-get', 'update'], check=True)
+        subprocess.run(['sudo', 'apt-get', 'install', '-y', 'google-chrome-stable'], check=True)
+        print("Google Chrome installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing Google Chrome: {e}")
+
+def get_chrome_path():
+    try:
+        result = subprocess.run(['which', 'google-chrome'], stdout=subprocess.PIPE, check=True)
+        chrome_path = result.stdout.decode().strip()
+        if not chrome_path:
+            raise FileNotFoundError("Google Chrome executable not found.")
+        return chrome_path
+    except subprocess.CalledProcessError as e:
+        print(f"Error finding Chrome path: {e}")
+        return None
 
 def connect_to_database():
     try:
@@ -100,15 +112,13 @@ def create_table_if_not_exists(connection):
     """
 
     try:
-        cursor = connection.cursor()
-        cursor.execute(create_vehicle_table_query)
-        cursor.execute(create_image_table_query)
-        connection.commit()
-        print("Tables created or already exist.")
+        with connection.cursor() as cursor:
+            cursor.execute(create_vehicle_table_query)
+            cursor.execute(create_image_table_query)
+            connection.commit()
+            print("Tables created or already exist.")
     except Error as e:
         print(f"Error creating tables: {e}")
-    finally:
-        cursor.close()
 
 def escape_single_quotes(value):
     return value.replace("'", "''")
@@ -117,52 +127,62 @@ def insert_data_to_database(data, images):
     connection = connect_to_database()
     if connection:
         create_table_if_not_exists(connection)
-        cursor = connection.cursor()
         try:
-            for entry in data:
-                entry = {key: escape_single_quotes(value) if isinstance(value, str) else value for key, value in entry.items()}
-                
-                vehicle_query = f"""
-                INSERT INTO vehicle_data__ (
-                    lot_number, salvage_yard, asset_number, location, restrictions,
-                    vehicle_year, make, model_sub, body_style, serial_number,
-                    previously_rebuilt, bc_assigned_vin, int_ext_colour, mileage,
-                    engine_size, transmission, seats, fuel_type, roof_options,
-                    power_equipment, keys_included, sound, us_vehicle, wheel_type,
-                    prior_damage_over_2000, canopy, dismantle_only,
-                    special_equipment_or_damage, previously_registered_outside_bc,
-                    damage, warning
-                ) VALUES (
-                    '{entry.get('Lot #', '')}', '{entry.get('Salvage Yard', '')}', '{entry.get('Asset #', '')}', '{entry.get('Location', '')}', '{entry.get('Restrictions', '')}',
-                    '{entry.get('Vehicle Year', '')}', '{entry.get('Make', '')}', '{entry.get('Model/Sub', '')}', '{entry.get('Body Style', '')}', '{entry.get('Serial Number', '')}',
-                    '{entry.get('Previously Rebuilt', '')}', '{entry.get('BC Assigned VIN', '')}', '{entry.get('Int/Ext Colour', '')}', '{entry.get('Mileage', '')}',
-                    '{entry.get('Engine Size', '')}', '{entry.get('Transmission', '')}', '{entry.get('Seats', '')}', '{entry.get('Fuel Type', '')}', '{entry.get('Roof Options', '')}',
-                    '{entry.get('Power Equipment', '')}', '{entry.get('Keys Included', '')}', '{entry.get('Sound', '')}', '{entry.get('US Vehicle', '')}', '{entry.get('Wheel Type', '')}',
-                    '{entry.get('Prior Damage Over $2000', '')}', '{entry.get('Canopy', '')}', '{entry.get('Dismantle Only', '')}',
-                    '{entry.get('Special Equipment and/or Prior Damage Description', '')}', '{entry.get('Previously Registered Outside BC', '')}',
-                    '{entry.get('Damage', '')}', '{entry.get('Warning', '')}'
-                );
-                """
-                
-                cursor.execute(vehicle_query)
-                
-                for image in images:
-                    image_query = f"""
-                    INSERT INTO vehicle_images__ (lot_number, image ,url)
-                    VALUES ('{entry.get('Lot #', '')}', '{image[0]}', '{image[1]}');
-                    """
-                    cursor.execute(image_query)
+            with connection.cursor() as cursor:
+                for entry in data:
+                    entry = {key: escape_single_quotes(value) if isinstance(value, str) else value for key, value in entry.items()}
                     
-            connection.commit()
-            print("Data inserted successfully.")
+                    vehicle_query = f"""
+                    INSERT INTO vehicle_data__ (
+                        lot_number, salvage_yard, asset_number, location, restrictions,
+                        vehicle_year, make, model_sub, body_style, serial_number,
+                        previously_rebuilt, bc_assigned_vin, int_ext_colour, mileage,
+                        engine_size, transmission, seats, fuel_type, roof_options,
+                        power_equipment, keys_included, sound, us_vehicle, wheel_type,
+                        prior_damage_over_2000, canopy, dismantle_only,
+                        special_equipment_or_damage, previously_registered_outside_bc,
+                        damage, warning
+                    ) VALUES (
+                        '{entry.get('Lot #', '')}', '{entry.get('Salvage Yard', '')}', '{entry.get('Asset #', '')}', '{entry.get('Location', '')}', '{entry.get('Restrictions', '')}',
+                        '{entry.get('Vehicle Year', '')}', '{entry.get('Make', '')}', '{entry.get('Model/Sub', '')}', '{entry.get('Body Style', '')}', '{entry.get('Serial Number', '')}',
+                        '{entry.get('Previously Rebuilt', '')}', '{entry.get('BC Assigned VIN', '')}', '{entry.get('Int/Ext Colour', '')}', '{entry.get('Mileage', '')}',
+                        '{entry.get('Engine Size', '')}', '{entry.get('Transmission', '')}', '{entry.get('Seats', '')}', '{entry.get('Fuel Type', '')}', '{entry.get('Roof Options', '')}',
+                        '{entry.get('Power Equipment', '')}', '{entry.get('Keys Included', '')}', '{entry.get('Sound', '')}', '{entry.get('US Vehicle', '')}', '{entry.get('Wheel Type', '')}',
+                        '{entry.get('Prior Damage Over $2000', '')}', '{entry.get('Canopy', '')}', '{entry.get('Dismantle Only', '')}',
+                        '{entry.get('Special Equipment and/or Prior Damage Description', '')}', '{entry.get('Previously Registered Outside BC', '')}',
+                        '{entry.get('Damage', '')}', '{entry.get('Warning', '')}'
+                    );
+                    """
+                    
+                    cursor.execute(vehicle_query)
+                    
+                    for image in images:
+                        image_query = f"""
+                        INSERT INTO vehicle_images__ (lot_number, image ,url)
+                        VALUES ('{entry.get('Lot #', '')}', '{image[0]}', '{image[1]}');
+                        """
+                        cursor.execute(image_query)
+                        
+                connection.commit()
+                print("Data inserted successfully.")
         except Error as e:
             print(f"Error inserting data: {e}")
         finally:
-            cursor.close()
             connection.close()
 
 def login(username, password):
     global driver
+    chrome_path = get_chrome_path()
+    if not chrome_path:
+        install_chrome()
+        chrome_path = get_chrome_path()
+
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.binary_location = chrome_path
+
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     try:
         driver.get(login_page_url)
@@ -176,14 +196,14 @@ def login(username, password):
         submit_button = driver.find_element(By.NAME, 'submit')
         submit_button.click()
         print("Clicked submit button.")
-        print(3)  # Wait for login to complete
+        time.sleep(3)  # Wait for login to complete
 
         # Handle session expiry and restart if necessary
         try:
             restart_link = driver.find_element(By.LINK_TEXT, 'Restart Salvage Web Session')
             restart_link.click()
             print("Clicked restart link.")
-            print(3)  # Wait for session restart to complete
+            time.sleep(3)  # Wait for session restart to complete
         except Exception as e:
             print("No session restart needed.")
         
@@ -256,7 +276,6 @@ def scrape_page(page_num, cookies):
         image_elements = image_table.find_elements(By.TAG_NAME, 'img')
         images = [img.get_attribute('src') for img in image_elements if 'AssetImageAction' in img.get_attribute('src')]
         images = [download_image_as_base64(img, cookies) for img in images]
-        # print(images)
         details['Images'] = images
         page_data.append(details)
         insert_data_to_database(page_data, images)
@@ -304,25 +323,23 @@ def get_next_page_url(first_page, rel):
         return ''
 
 def close_browser():
-    driver.quit()
-    print("Closed the browser.")
+    if driver:
+        driver.quit()
+        print("Closed the browser.")
 
 @app.post("/Scrape")
 async def login_endpoint(login_details: LoginDetails, background_tasks: BackgroundTasks):
-    
     try:
         login(login_details.username, login_details.password)
         cookies = driver.get_cookies()
         background_tasks.add_task(navigate_and_submit_filter, cookies)
         return {"message": "Login initiated, scraping in background."}
     except Exception as e:
-        print("Exception",e)
+        raise HTTPException(status_code=500, detail=f"Error during login or scraping: {e}")
     finally:
-        if driver:
-            close_browser()
-
-
+        close_browser()
 
 if __name__ == "__main__":
+    install_chrome()
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=3033)
