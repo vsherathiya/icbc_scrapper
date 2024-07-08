@@ -51,7 +51,7 @@ def connect_to_database():
 
 def create_table_if_not_exists(connection):
     create_vehicle_table_query = """
-    CREATE TABLE IF NOT EXISTS vehicle_data__ (
+    CREATE TABLE IF NOT EXISTS vehicle_data (
         lot_number VARCHAR(50),
         salvage_yard VARCHAR(100),
         asset_number VARCHAR(50),
@@ -88,13 +88,13 @@ def create_table_if_not_exists(connection):
     """
     
     create_image_table_query = """
-    CREATE TABLE IF NOT EXISTS vehicle_images__ (
+    CREATE TABLE IF NOT EXISTS vehicle_images (
         id INT AUTO_INCREMENT,
         lot_number VARCHAR(50),
         image LONGTEXT,
         url TEXT,
         PRIMARY KEY (id),
-        FOREIGN KEY (lot_number) REFERENCES vehicle_data__(lot_number) ON DELETE CASCADE
+        FOREIGN KEY (lot_number) REFERENCES vehicle_data(lot_number) ON DELETE CASCADE
     );
     """
 
@@ -122,7 +122,7 @@ def insert_data_to_database(data, images):
                 entry = {key: escape_single_quotes(value) if isinstance(value, str) else value for key, value in entry.items()}
                 
                 vehicle_query = f"""
-                INSERT INTO vehicle_data__ (
+                INSERT INTO vehicle_data (
                     lot_number, salvage_yard, asset_number, location, restrictions,
                     vehicle_year, make, model_sub, body_style, serial_number,
                     previously_rebuilt, bc_assigned_vin, int_ext_colour, mileage,
@@ -147,7 +147,7 @@ def insert_data_to_database(data, images):
                 
                 for image in images:
                     image_query = f"""
-                    INSERT INTO vehicle_images__ (lot_number, image ,url)
+                    INSERT INTO vehicle_images (lot_number, image ,url)
                     VALUES ('{entry.get('Lot #', '')}', '{image[0]}', '{image[1]}');
                     """
                     cursor.execute(image_query)
