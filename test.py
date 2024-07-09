@@ -7,6 +7,7 @@ import uvicorn
 
 app = FastAPI()
 
+
 class CarInfo(BaseModel):
     cars_type: str
     category: str
@@ -41,6 +42,7 @@ class CarInfo(BaseModel):
     hid_addedby: str
     h_inventory: str
     hid_allimages: list[str]
+
 
 @app.post("/add_car_info")
 async def add_car_info(car_info: CarInfo):
