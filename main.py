@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 import mysql.connector
 from mysql.connector import Error
 from selenium import webdriver
@@ -13,39 +12,40 @@ from webdriver_manager.chrome import ChromeDriverManager
 import base64
 import requests
 import json
-from exception import CustomException ,setup_logger
+from exception import CustomException, setup_logger
 import sys
+from threading import Thread
+import uvicorn
 
 app = FastAPI()
-
-logging = setup_logger("icbc", f"icbc")
+logger = setup_logger("icbc", f"icbc")
 # Login and filter page URLs
 login_page_url = 'https://onlinebusiness.icbc.com/salvage/auth/Form-login.jsp'
 filter_page_url = 'https://onlinebusiness.icbc.com/salvage/webServlet/Search?form=VehicleSales'
 
 # Database configuration
-# db_config = {
-#     'host': 'localhost',        # Replace with your database host
-#     'user': 'root',             # Replace with your database user
-#     'password': '',             # Replace with your database password
-#     'database': 'scrap_data',   # Replace with your database name
-#     'port': 3307
-# }
 db_config = {
-    'host': 'localhost',        # Replace with your database host
-    'user': 'icbc_scrapper',             # Replace with your database user
-    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
-    'database': 'icbc_scrapper_DB',   # Replace with your database name
-    'port': 3306
+    'host': 'localhost',  # Replace with your database host
+    'user': 'root',  # Replace with your database user
+    'password': '',  # Replace with your database password
+    'database': 'scrap_data',  # Replace with your database name
+    'port': 3307
 }
+#db_config = {
+#    'host': 'localhost',        # Replace with your database host
+#    'user': 'icbc_scrapper',             # Replace with your database user
+#    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
+#    'database': 'icbc_scrapper_DB',   # Replace with your database name
+#    'port': 3306
+#}
 
 # Setup Chrome options
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu`")
 chrome_options.add_argument("--no-sandbox")
-chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
-logging.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
+#chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
+logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 
 driver = None
 
@@ -60,20 +60,20 @@ def connect_to_database():
         connection = mysql.connector.connect(**db_config)
         if connection.is_connected():
             print("Connected to the database.")
-            logging.info("Connected to the database.")
-            
+            logger.info("Connected to the database.")
+
             return connection
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.info(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(f"Error connecting to database: {e}")
-        logging.error(f"Error connecting to database: {e}")
+        logger.error(f"Error connecting to database: {e}")
         return None
 
 
 def create_table_if_not_exists(connection):
     create_vehicle_table_query = """
-    CREATE TABLE IF NOT EXISTS vehicle_data (
+    CREATE TABLE IF NOT EXISTS vehicle_data_ (
         lot_number VARCHAR(50),
         salvage_yard VARCHAR(100),
         asset_number VARCHAR(50),
@@ -81,7 +81,7 @@ def create_table_if_not_exists(connection):
         restrictions TEXT,
         vehicle_year INT,
         make VARCHAR(50),
-        model_sub VARCHAR(50),
+        model_sub VARCHAR(50),      
         body_style VARCHAR(50),
         serial_number VARCHAR(50),
         previously_rebuilt VARCHAR(50),
@@ -106,18 +106,19 @@ def create_table_if_not_exists(connection):
         damage TEXT,
         warning TEXT,
         closing_date TEXT,
+		status text,
         PRIMARY KEY (lot_number)
     );
     """
 
     create_image_table_query = """
-    CREATE TABLE IF NOT EXISTS vehicle_images (
+    CREATE TABLE IF NOT EXISTS vehicle_images_ (
         id INT AUTO_INCREMENT,
         lot_number VARCHAR(50),
         image LONGTEXT,
         url TEXT,
         PRIMARY KEY (id),
-        FOREIGN KEY (lot_number) REFERENCES vehicle_data(lot_number) ON DELETE CASCADE
+        FOREIGN KEY (lot_number) REFERENCES vehicle_data_(lot_number) ON DELETE CASCADE
     );
     """
 
@@ -127,12 +128,12 @@ def create_table_if_not_exists(connection):
         cursor.execute(create_image_table_query)
         connection.commit()
         print("Tables created or already exist.")
-        logging.info("Tables created or already exist.")
+        logger.info("Tables created or already exist.")
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.info(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(f"Error creating tables: {e}")
-        logging.error(f"Error creating tables: {e}")
+        logger.error(f"Error creating tables: {e}")
     finally:
         cursor.close()
 
@@ -141,7 +142,7 @@ def escape_single_quotes(value):
     return value.replace("'", "''")
 
 
-def insert_data_to_database(data, images):
+def insert_data_to_database(data, images, status):
     connection = connect_to_database()
     if connection:
         create_table_if_not_exists(connection)
@@ -152,7 +153,7 @@ def insert_data_to_database(data, images):
                     value, str) else value for key, value in entry.items()}
 
                 vehicle_query = f"""
-                INSERT INTO vehicle_data (
+                INSERT INTO vehicle_data_ (
                     lot_number, salvage_yard, asset_number, location, restrictions,
                     vehicle_year, make, model_sub, body_style, serial_number,
                     previously_rebuilt, bc_assigned_vin, int_ext_colour, mileage,
@@ -160,7 +161,7 @@ def insert_data_to_database(data, images):
                     power_equipment, keys_included, sound, us_vehicle, wheel_type,
                     prior_damage_over_2000, canopy, dismantle_only,
                     special_equipment_or_damage, previously_registered_outside_bc,
-                    damage, warning ,closing_date
+                    damage, warning ,closing_date,status
                 ) VALUES (
                     '{entry.get('Lot #', '')}', '{entry.get('Salvage Yard', '')}', '{entry.get('Asset #', '')}', '{entry.get('Location', '')}', '{entry.get('Restrictions', '')}',
                     '{entry.get('Vehicle Year', '')}', '{entry.get('Make', '')}', '{entry.get('Model/Sub', '')}', '{entry.get('Body Style', '')}', '{entry.get('Serial Number', '')}',
@@ -170,6 +171,7 @@ def insert_data_to_database(data, images):
                     '{entry.get('Prior Damage Over $2000', '')}', '{entry.get('Canopy', '')}', '{entry.get('Dismantle Only', '')}',
                     '{entry.get('Special Equipment and/or Prior Damage Description', '')}', '{entry.get('Previously Registered Outside BC', '')}',
                     '{entry.get('Damage', '')}', '{entry.get('Warning', '')}', '{entry.get('Closing Date', '')}'
+                    ,{status}
                 )
                 ON DUPLICATE KEY UPDATE
                     salvage_yard=VALUES(salvage_yard),
@@ -204,14 +206,9 @@ def insert_data_to_database(data, images):
                     warning=VALUES(warning),
                     closing_date=VALUES(closing_date);
                 """
-                logging.info(f"""
-                             
-                             {vehicle_query}
-                             
-                             """)
                 cursor.execute(vehicle_query)
-                
-                logging.info(f"""
+
+                logger.info(f"""
                              '{entry.get('Lot #', '')}' --> added or updated
                              
                              """)
@@ -219,20 +216,32 @@ def insert_data_to_database(data, images):
                 for image in images:
                     try:
                         image_query = f"""
-                        INSERT INTO vehicle_images (lot_number, image ,url)
+                        INSERT INTO vehicle_images_ (lot_number, image ,url)
                         VALUES ('{entry.get('Lot #', '')}', '{image[0]}', '{image[1]}');
                         """
                         cursor.execute(image_query)
+                        logger.info(f"""
+                             '{entry.get('Lot #', '')}' --> images added or updated
+                             
+                             """)
                     except Exception as e:
-                        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+                        logger.error(f"Error Occurred at {CustomException(e, sys)}")
                         print(CustomException(e, sys))
                         print(f"Error inserting data: {e}")
+                        logger.error(f"""
+                             '{entry.get('Lot #', '')}' --> error in images added or updated
+                             
+                             """)
             connection.commit()
             print("Data inserted successfully.")
         except Exception as e:
-            logging.info(f"Error Occurred at {CustomException(e,sys)}")
+            logger.info(f"Error Occurred at {CustomException(e, sys)}")
             print(CustomException(e, sys))
             print(f"Error inserting data: {e}")
+            logger.error(f"""
+                             '{entry.get('Lot #', '')}' --> error added or updated
+                             
+                             """)
         finally:
             cursor.close()
             connection.close()
@@ -244,15 +253,19 @@ def login(username, password):
     try:
         driver.get(login_page_url)
         print("Opened login page.")
+        logger.info("Opened login page.")
         username_field = driver.find_element(By.NAME, 'j_username')
         username_field.send_keys(username)
         print("Entered username.")
+        logger.info("Entered username.")
         password_field = driver.find_element(By.NAME, 'j_password')
         password_field.send_keys(password)
         print("Entered password.")
+        logger.info("Entered password.")
         submit_button = driver.find_element(By.NAME, 'submit')
         submit_button.click()
         print("Clicked submit button.")
+        logger.info("Clicked submit button.")
 
         # Handle session expiry and restart if necessary
         try:
@@ -260,16 +273,19 @@ def login(username, password):
                 By.LINK_TEXT, 'Restart Salvage Web Session')
             restart_link.click()
             print("Clicked restart link.")
+            logger.info("Clicked restart link.")
         except Exception as e:
-            logging.info(f"Error Occurred at {CustomException(e,sys)}")
+            logger.info(f"Error Occurred at {CustomException(e, sys)}")
             print(CustomException(e, sys))
             print("No session restart needed.")
+            logger.info("No session restart needed.")
 
         print("Login successful, proceeding to filter page.")
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(f"An error occurred during login: {e}")
+        logger.error(f"An error occurred during login: {e}")
 
 
 def extract_structured_data_from_raw(raw_data_dict):
@@ -301,6 +317,7 @@ def extract_structured_data_from_raw(raw_data_dict):
 def download_image_as_base64(image_url, cookies):
     try:
         print(f"Downloading image from URL: {image_url}")
+        logger.info(f"Downloading image from URL: {image_url}")
         session = requests.Session()
         image_url = image_url.replace('size=1', 'size=2')
         # Add Selenium cookies to the session
@@ -315,37 +332,38 @@ def download_image_as_base64(image_url, cookies):
         return base64.b64encode(image_content).decode('utf-8'), image_url
     except requests.exceptions.RequestException as e:
         print(f"Error downloading image: {e}")
+        logger.error(f"Error downloading image: {CustomException(e, sys)}")
         return '', image_url
 
 
 def extract_structured_data(details):
     # Assuming details is a dictionary with raw scraped data, map to final JSON keys
     try:
-        cars_type =   "9"
-        category =   "car"
-        make =   f"""{details.get("Make", "").split("/")[0]}"""
-        model =   f"""{details.get("Model/Sub", "").split("/")[0]}"""
-        year =   f"""{details.get("Vehicle Year", "")}"""
-        type =   "Coupe" if "2DCPE" in f"""{details.get("Body Style", "")}""" else ""
-        status =   "Damaged"
-        vin =   f"""{details.get("Serial Number", "")}"""
-        fuel_type =  f"""{details.get("Fuel Type", "")}"""
-        transmission =  f"""{details.get("Transmission", "")}"""
-        engine =  f"""{details.get("Engine Size", "")}"""
-        cylinders =  f"""{details.get("Engine Size", "").split(" ")[0].replace("CYL", "")}"""
-        drive =   ""
-        kilometer =  f"""{details.get("Mileage", "")}"""
-        mileage_type =   "KM"
-        condition =  f"""{details.get("Damage", "")}"""
-        keys =  f"""{str(0) if details.get("Keys Included") == "N" else str(1)}"""
-        stock_number =  f"""{details.get("Lot #", "")}"""
-        interior_colour =  f"""{details.get("Int/Ext Colour", "").split("/")[0]}"""
-        exterior_colour =  f"""{details.get("Int/Ext Colour", "").split("/")[1]}"""
-        accessories =   ""
-        currency =   "CAD"
-        price =   "1"
-        country =   "Canada"
-        state =   "British Columbia"
+        cars_type = "9"
+        category = "car"
+        make = f"""{details.get("Make", "").split("/")[0]}"""
+        model = f"""{details.get("Model/Sub", "").split("/")[0]}"""
+        year = f"""{details.get("Vehicle Year", "")}"""
+        type = "Coupe" if "2DCPE" in f"""{details.get("Body Style", "")}""" else ""
+        status = "Damaged"
+        vin = f"""{details.get("Serial Number", "")}"""
+        fuel_type = f"""{details.get("Fuel Type", "")}"""
+        transmission = f"""{details.get("Transmission", "")}"""
+        engine = f"""{details.get("Engine Size", "")}"""
+        cylinders = f"""{details.get("Engine Size", "").split(" ")[0].replace("CYL", "")}"""
+        drive = ""
+        kilometer = f"""{details.get("Mileage", "")}"""
+        mileage_type = "KM"
+        condition = f"""{details.get("Damage", "")}"""
+        keys = f"""{str(0) if details.get("Keys Included") == "N" else str(1)}"""
+        stock_number = f"""{details.get("Lot #", "")}"""
+        interior_colour = f"""{details.get("Int/Ext Colour", "").split("/")[0]}"""
+        exterior_colour = f"""{details.get("Int/Ext Colour", "").split("/")[1]}"""
+        accessories = ""
+        currency = "CAD"
+        price = "1"
+        country = "Canada"
+        state = "British Columbia"
         location = details.get("Location", "")
         location_parts = location.split(", ")
 
@@ -357,71 +375,71 @@ def extract_structured_data(details):
                 city = location_parts[1]
         else:
             city = "Unknown"
-        auction_date =  f"""{details.get("Closing Date", "")}"""
-        purchase_option =   "0"
-        hid_main_images =   ""
-        hid_addedtype =   "2"
-        hid_addedby =   "47"
-        h_inventory =   "addinventory"
+        auction_date = f"""{details.get("Closing Date", "")}"""
+        purchase_option = "0"
+        hid_main_images = ""
+        hid_addedtype = "2"
+        hid_addedby = "47"
+        h_inventory = "addinventory"
         hid_allimages = []
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-        
-        
+
     return {
-        "cars_type":cars_type,
-        "category":category,
-        "make":make,
-        "model":model,
-        "year":year,
-        "type":type,
-        "status":status,
-        "vin":vin,
-        "fuel_type":fuel_type,
-        "transmission":transmission,
-        "engine":engine,
-        "cylinders":cylinders,
-        "drive":drive,
-        "kilometer":kilometer,
-        "mileage_type":mileage_type,
-        "condition":condition,
-        "keys":keys,
-        "stock_number":stock_number,
-        "interior_colour":interior_colour,
-        "exterior_colour":exterior_colour,
-        "accessories":accessories,
-        "currency":currency,
-        "price":price,
-        "country":country,
-        "state":state,
+        "cars_type": cars_type,
+        "category": category,
+        "make": make,
+        "model": model,
+        "year": year,
+        "type": type,
+        "status": status,
+        "vin": vin,
+        "fuel_type": fuel_type,
+        "transmission": transmission,
+        "engine": engine,
+        "cylinders": cylinders,
+        "drive": drive,
+        "kilometer": kilometer,
+        "mileage_type": mileage_type,
+        "condition": condition,
+        "keys": keys,
+        "stock_number": stock_number,
+        "interior_colour": interior_colour,
+        "exterior_colour": exterior_colour,
+        "accessories": accessories,
+        "currency": currency,
+        "price": price,
+        "country": country,
+        "state": state,
         "city": city,
-        "auction_date":auction_date,
-        "purchase_option":purchase_option,
-        "hid_main_images":hid_main_images,
-        "hid_addedtype":hid_addedtype,
-        "hid_addedby":hid_addedby,
-        "h_inventory":h_inventory,
+        "auction_date": auction_date,
+        "purchase_option": purchase_option,
+        "hid_main_images": hid_main_images,
+        "hid_addedtype": hid_addedtype,
+        "hid_addedby": hid_addedby,
+        "h_inventory": h_inventory,
         "hid_allimages": hid_allimages,
     }
 
 
 def call_api(data):
-    
-    headers = {
-        'accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
-    url = "https://americanauctionaccess.com/scrap-api"
-    # Convert data to JSON string
-
-    response = requests.post(url,headers=headers ,data=data)
-    print(response.status_code)
-    if response.status_code == 200:
-        print("Data successfully sent to API")
-    else:
-        print(
-            f"Failed to send data to API. Status code: {response.status_code}")
+    try:
+        headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+        url = "http://localhost:8000/add_car_info"
+        response = requests.post(url, headers=headers, data=data)
+        print(response.status_code)
+        if response.status_code == 200:
+            logger.info("Data successfully sent to API")
+            print("Data successfully sent to API")
+            return f"successful status code - {response.status_code}"
+        else:
+            print(f"Failed to send data to API. Status code: {response.status_code}")
+            return f"Failed status code - {response.status_code}"
+    except Exception as e:
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        print(CustomException(e, sys))
+        return "None"
 
 
 def convert_date_format(date_str):
@@ -454,21 +472,13 @@ def scrape_page(page_num, cookies):
         details = extract_structured_data_from_raw(details)
         details['Closing Date'] = closing_date_text
 
-        print(details)
-
         image_table = driver.find_element(
             By.XPATH, '/html/body/p[1]/table[1]/tbody[1]/tr[3]/td')
         image_elements = image_table.find_elements(By.TAG_NAME, 'img')
         images = [img.get_attribute('src') for img in image_elements if 'AssetImageAction' in img.get_attribute('src')]
-		
-		#print("\n",images,"\n")
         images = [download_image_as_base64(img, cookies) for img in images]
-		#print(image[0])
         details['Images'] = images
-        print(len(images))
-
         page_data.append(details)
-
         data = extract_structured_data(details)
         fue_t = {
             "G": "Gas",
@@ -479,13 +489,12 @@ def scrape_page(page_num, cookies):
         }
         fuel = data.get("fuel_type")[0]
         data['fuel_type'] = fue_t.get(fuel, "")
-        data['transmission'] = "Automatic" if data.get(
-            "transmission", "") == "AUTO" else data.get("transmission", "")
-
-        print(data.keys())
+        data['transmission'] = "Automatic" if data.get("transmission", "") == "AUTO" else data.get("transmission", "")
         print(data)
         data['hid_allimages'] = [f"""{img[0]}""" for img in images]
-        print(len(data['hid_allimages']))
+        print(f" Total Images {len(data['hid_allimages'])}")
+        logger.info(f" Total Images {len(data['hid_allimages'])}")
+
         file_name = f"{data['stock_number']}.json"
         file_path = os.path.join("data/d", file_name)
 
@@ -496,11 +505,13 @@ def scrape_page(page_num, cookies):
             json.dump(data, json_file, indent=4)
         # print(data)
         json_data = json.dumps(data)
-        call_api(json_data)
-        insert_data_to_database(page_data, images)
-        print(f"Page {page_num} data appended to database.")
+        status = call_api(json_data)
+        logger.info(json_data)
+        insert_data_to_database(page_data, images, status)
+        print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
+        logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.info(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(f"Error scraping page {page_num}: {e}")
     return page_data
@@ -510,19 +521,23 @@ def navigate_and_submit_filter(cookies):
     try:
         driver.get(filter_page_url)
         print("Opened filter page.")
+        logger.info("Opened filter page.")
         submit_button = driver.find_element(By.NAME, 's2')
         submit_button.click()
         print("Clicked filter submit button.")
+        logger.info("Clicked filter submit button.")
         total_found, first_page = get_total_pages()
         print(f"Total pages: {total_found}")
+        logger.info(f"Total pages: {total_found}")
         for page_num in range(1, total_found + 2):
             print(f"Scraping page {page_num}...")
+            logger.info(f"Scraping page {page_num}...")
             scrape_page(page_num, cookies)
             if page_num < total_found:
                 next_page_url = get_next_page_url(first_page, page_num)
                 driver.get(next_page_url)
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.info(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(
             f"An error occurred during navigation and filter submission: {e}")
@@ -539,7 +554,7 @@ def get_total_pages():
         first_page = first_page.get_attribute('href')
         return total_found, first_page
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(f"Error extracting total pages: {e}")
         return 1, ''
@@ -550,7 +565,7 @@ def get_next_page_url(first_page, rel):
         url_parts = first_page.split('rel=')
         return f"{url_parts[0]}rel={rel}"
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         print(f"Error constructing next page URL: {e}")
         return ''
@@ -560,10 +575,12 @@ def close_browser():
     if driver:
         driver.quit()
         print("Closed the browser.")
+        logger.info("Closed the browser.")
+        return "Stopping Scrapping"
 
 
 @app.post("/Scrape")
-async def login_endpoint(login_details: LoginDetails):
+def login_endpoint(login_details: LoginDetails):
     global driver
     try:
         login(login_details.username, login_details.password)
@@ -571,14 +588,20 @@ async def login_endpoint(login_details: LoginDetails):
         navigate_and_submit_filter(cookies)
         return {"message": "Scraping completed."}
     except Exception as e:
-        logging.info(f"Error Occurred at {CustomException(e,sys)}")
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-        print("Exception", e)
         raise HTTPException(
             status_code=500, detail="An error occurred during scraping.")
     finally:
         close_browser()
 
+
+@app.post("/stop-server")
+def stop_server():
+    close_browser()
+
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=3033)
