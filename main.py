@@ -53,7 +53,9 @@ driver = None
 class LoginDetails(BaseModel):
     username: str = "B073902"
     password: str = "MUJEB786"
-
+    b_year: str = "All"
+    e_year: str = "All"
+    
 
 def connect_to_database():
     try:
@@ -255,7 +257,6 @@ def login(username, password):
     try:
         driver.get(login_page_url)
         print("Opened login page.")
-        logger.info("Opened login page.")
         username_field = driver.find_element(By.NAME, 'j_username')
         username_field.send_keys(username)
         print("Entered username.")
@@ -507,12 +508,16 @@ def scrape_page(page_num, cookies):
             json.dump(data, json_file, indent=4)
         # print(data)
         json_data = json.dumps(data)
-        status_code = call_api(json_data)
-        logger.info(json_data)
-        insert_data_to_database(page_data, images, str(status_code))
-        print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
-        logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
-        print(status_code)
+        if len(data['hid_allimages'])>0:
+            status_code = call_api(json_data)
+            logger.info(json_data)
+            insert_data_to_database(page_data, images, str(status_code))
+            print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
+            logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
+            print(status_code)
+        else:
+            print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} has No Images")
+            logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} has No Image")
     except Exception as e:
         logger.info(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
@@ -520,11 +525,15 @@ def scrape_page(page_num, cookies):
     return page_data
 
 
-def navigate_and_submit_filter(cookies):
+def navigate_and_submit_filter(cookies,b_years,e_years):
     try:
         driver.get(filter_page_url)
         print("Opened filter page.")
         logger.info("Opened filter page.")
+        b_year = driver.find_element(By.NAME, 'by')
+        b_year.send_keys(b_years)
+        e_year = driver.find_element(By.NAME, 'ey')
+        e_year.send_keys(e_years)
         submit_button = driver.find_element(By.NAME, 's2')
         submit_button.click()
         print("Clicked filter submit button.")
@@ -588,7 +597,7 @@ def login_endpoint(login_details: LoginDetails):
     try:
         login(login_details.username, login_details.password)
         cookies = driver.get_cookies()
-        navigate_and_submit_filter(cookies)
+        navigate_and_submit_filter(cookies,login_details.b_year,login_details.e_year)
         return {"message": "Scraping completed."}
     except Exception as e:
         logger.error(f"Error Occurred at {CustomException(e, sys)}")
