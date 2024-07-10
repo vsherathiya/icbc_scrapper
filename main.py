@@ -24,27 +24,27 @@ login_page_url = 'https://onlinebusiness.icbc.com/salvage/auth/Form-login.jsp'
 filter_page_url = 'https://onlinebusiness.icbc.com/salvage/webServlet/Search?form=VehicleSales'
 
 # Database configuration
+# db_config = {
+#     'host': 'localhost',  # Replace with your database host
+#     'user': 'root',  # Replace with your database user
+#     'password': '',  # Replace with your database password
+#     'database': 'scrap_data',  # Replace with your database name
+#     'port': 3307
+# }
 db_config = {
-    'host': 'localhost',  # Replace with your database host
-    'user': 'root',  # Replace with your database user
-    'password': '',  # Replace with your database password
-    'database': 'scrap_data',  # Replace with your database name
-    'port': 3307
+   'host': 'localhost',        # Replace with your database host
+   'user': 'icbc_scrapper',             # Replace with your database user
+   'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
+   'database': 'icbc_scrapper_DB',   # Replace with your database name
+   'port': 3306
 }
-#db_config = {
-#    'host': 'localhost',        # Replace with your database host
-#    'user': 'icbc_scrapper',             # Replace with your database user
-#    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
-#    'database': 'icbc_scrapper_DB',   # Replace with your database name
-#    'port': 3306
-#}
 
 # Setup Chrome options
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu`")
 chrome_options.add_argument("--no-sandbox")
-#chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
+chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
 logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 
 driver = None
@@ -73,7 +73,7 @@ def connect_to_database():
 
 def create_table_if_not_exists(connection):
     create_vehicle_table_query = """
-    CREATE TABLE IF NOT EXISTS vehicle_data_ (
+    CREATE TABLE IF NOT EXISTS vehicle_data (
         lot_number VARCHAR(50),
         salvage_yard VARCHAR(100),
         asset_number VARCHAR(50),
@@ -106,19 +106,19 @@ def create_table_if_not_exists(connection):
         damage TEXT,
         warning TEXT,
         closing_date TEXT,
-		status text,
+		status_code TEXT,
         PRIMARY KEY (lot_number)
     );
     """
 
     create_image_table_query = """
-    CREATE TABLE IF NOT EXISTS vehicle_images_ (
+    CREATE TABLE IF NOT EXISTS vehicle_images (
         id INT AUTO_INCREMENT,
         lot_number VARCHAR(50),
         image LONGTEXT,
         url TEXT,
         PRIMARY KEY (id),
-        FOREIGN KEY (lot_number) REFERENCES vehicle_data_(lot_number) ON DELETE CASCADE
+        FOREIGN KEY (lot_number) REFERENCES vehicle_data(lot_number) ON DELETE CASCADE
     );
     """
 
@@ -142,7 +142,7 @@ def escape_single_quotes(value):
     return value.replace("'", "''")
 
 
-def insert_data_to_database(data, images, status):
+def insert_data_to_database(data, images, status_code):
     connection = connect_to_database()
     if connection:
         create_table_if_not_exists(connection)
@@ -153,7 +153,7 @@ def insert_data_to_database(data, images, status):
                     value, str) else value for key, value in entry.items()}
 
                 vehicle_query = f"""
-                INSERT INTO vehicle_data_ (
+                INSERT INTO vehicle_data (
                     lot_number, salvage_yard, asset_number, location, restrictions,
                     vehicle_year, make, model_sub, body_style, serial_number,
                     previously_rebuilt, bc_assigned_vin, int_ext_colour, mileage,
@@ -161,7 +161,7 @@ def insert_data_to_database(data, images, status):
                     power_equipment, keys_included, sound, us_vehicle, wheel_type,
                     prior_damage_over_2000, canopy, dismantle_only,
                     special_equipment_or_damage, previously_registered_outside_bc,
-                    damage, warning ,closing_date,status
+                    damage, warning ,closing_date,status_code
                 ) VALUES (
                     '{entry.get('Lot #', '')}', '{entry.get('Salvage Yard', '')}', '{entry.get('Asset #', '')}', '{entry.get('Location', '')}', '{entry.get('Restrictions', '')}',
                     '{entry.get('Vehicle Year', '')}', '{entry.get('Make', '')}', '{entry.get('Model/Sub', '')}', '{entry.get('Body Style', '')}', '{entry.get('Serial Number', '')}',
@@ -171,7 +171,7 @@ def insert_data_to_database(data, images, status):
                     '{entry.get('Prior Damage Over $2000', '')}', '{entry.get('Canopy', '')}', '{entry.get('Dismantle Only', '')}',
                     '{entry.get('Special Equipment and/or Prior Damage Description', '')}', '{entry.get('Previously Registered Outside BC', '')}',
                     '{entry.get('Damage', '')}', '{entry.get('Warning', '')}', '{entry.get('Closing Date', '')}'
-                    ,{status}
+                    ,'{status_code}'
                 )
                 ON DUPLICATE KEY UPDATE
                     salvage_yard=VALUES(salvage_yard),
@@ -204,8 +204,10 @@ def insert_data_to_database(data, images, status):
                     previously_registered_outside_bc=VALUES(previously_registered_outside_bc),
                     damage=VALUES(damage),
                     warning=VALUES(warning),
-                    closing_date=VALUES(closing_date);
+                    closing_date=VALUES(closing_date),
+                    status_code=VALUES(status_code);
                 """
+
                 cursor.execute(vehicle_query)
 
                 logger.info(f"""
@@ -216,7 +218,7 @@ def insert_data_to_database(data, images, status):
                 for image in images:
                     try:
                         image_query = f"""
-                        INSERT INTO vehicle_images_ (lot_number, image ,url)
+                        INSERT INTO vehicle_images (lot_number, image ,url)
                         VALUES ('{entry.get('Lot #', '')}', '{image[0]}', '{image[1]}');
                         """
                         cursor.execute(image_query)
@@ -426,7 +428,7 @@ def extract_structured_data(details):
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "http://localhost:8000/add_car_info"
+        url = "https://americanauctionaccess.com/icbc-scrap-api"
         response = requests.post(url, headers=headers, data=data)
         print(response.status_code)
         if response.status_code == 200:
@@ -505,11 +507,12 @@ def scrape_page(page_num, cookies):
             json.dump(data, json_file, indent=4)
         # print(data)
         json_data = json.dumps(data)
-        status = call_api(json_data)
+        status_code = call_api(json_data)
         logger.info(json_data)
-        insert_data_to_database(page_data, images, status)
+        insert_data_to_database(page_data, images, str(status_code))
         print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
         logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
+        print(status_code)
     except Exception as e:
         logger.info(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
