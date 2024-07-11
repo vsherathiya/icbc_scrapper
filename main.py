@@ -510,7 +510,7 @@ def scrape_page(page_num, cookies):
         json_data = json.dumps(data)
         if len(data['hid_allimages'])>0:
             status_code = call_api(json_data)
-            logger.info(json_data)
+            # logger.info(json_data)
             insert_data_to_database(page_data, images, str(status_code))
             print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
             logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
