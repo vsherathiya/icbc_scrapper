@@ -499,10 +499,10 @@ def scrape_page(page_num, cookies):
         logger.info(f" Total Images {len(data['hid_allimages'])}")
 
         file_name = f"{data['stock_number']}.json"
-        file_path = os.path.join("data/d", file_name)
+        file_path = os.path.join("data/icbc", file_name)
 
-        if not os.path.exists("data/d"):
-            os.makedirs("data/d")
+        if not os.path.exists("data/icbc"):
+            os.makedirs("data/icbc")
 
         with open(file_path, 'w') as json_file:
             json.dump(data, json_file, indent=4)

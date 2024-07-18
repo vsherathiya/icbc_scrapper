@@ -42,6 +42,10 @@ class CarInfo(BaseModel):
     hid_addedby: str
     h_inventory: str
     hid_allimages: list[str]
+    auction_name: str
+    title_status: str
+    run: str
+    pmr: str
 
 
 @app.post("/add_car_info")
@@ -59,4 +63,6 @@ async def add_car_info(car_info: CarInfo):
 
 if __name__ == "__main__":
     # Run the server
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
+
+
