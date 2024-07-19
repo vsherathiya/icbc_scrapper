@@ -470,15 +470,33 @@ import logging
 from datetime import datetime
 from exception import CustomException, setup_logger
 from time import sleep,time
-logger = setup_logger("edgepipeline", f"edgepipeline.log")
+logger = setup_logger("edgepipeline", f"edgepipeline")
 
 app = FastAPI()
+
+# Database configuration
+db_config = {
+    'host': 'localhost',  # Replace with your database host
+    'user': 'root',  # Replace with your database user
+    'password': '',  # Replace with your database password
+    'database': 'scrap_data',  # Replace with your database name
+    'port': 3307
+}
+# db_config = {
+#    'host': 'localhost',        # Replace with your database host
+#    'user': 'icbc_scrapper',             # Replace with your database user
+#    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
+#    'database': 'icbc_scrapper_DB',   # Replace with your database name
+#    'port': 3306
+# }
 
 # Set up Chrome WebDriver options
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
+chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
+logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
 def get_element_text(driver, selector, name):
@@ -580,7 +598,7 @@ async def parse_links(request_body: RequestBody):
                     logger.error(f"Error processing URL: {CustomException(e, sys)}")
     finally:
         driver.quit()
-    return {"data": parsed_data}
+    return parsed_data
 
 # Function to call an external API
 def call_api(data):
@@ -663,7 +681,7 @@ def format_data(data):
     if formatted_data['hid_allimages']:
         status_code = call_api(json.dumps(formatted_data))
     
-    return [formatted_data, status_code]
+    return formatted_data
 
 if __name__ == "__main__":
     import uvicorn
