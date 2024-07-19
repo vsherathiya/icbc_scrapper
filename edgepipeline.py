@@ -526,7 +526,7 @@ def extract_data_from_url(driver, url):
         data['details'] = extract_section_data(driver, "#vdp > div.sections > div.section.details.closed > div > div", 13)
         data['auction'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.auction.closed > div > div", 6)
         data['declarations'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.declarations.closed > div > div", 4)
-
+        
         data['images_bs64'], data['images_links'] = get_image_sources(driver, 'images')
 
         elapsed_time = time() - start_time
@@ -578,6 +578,8 @@ def download_image_as_base64(image_url):
 
 # Define a model for the request body
 class RequestBody(BaseModel):
+    id : str 
+    password : str 
     links: List[str]
 
 # Define your API endpoint
@@ -586,6 +588,20 @@ async def parse_links(request_body: RequestBody):
     parsed_data = []
     driver = webdriver.Chrome(options=chrome_options)
     try:
+        driver.get('https://www.edgepipeline.com/components/login')  # Replace with the actual login URL
+
+        # Find the username and password input elements and fill them
+        username_input = driver.find_element(By.ID, 'username')
+        password_input = driver.find_element(By.ID, 'password')
+
+        username_input.send_keys(request_body.id)  # Replace with actual username
+        password_input.send_keys(request_body.password)  # Replace with actual password
+
+        # Submit the form
+        submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
+        submit_button.click()
+        
+        
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(extract_data_from_url, driver, link) for link in request_body.links]
             for future in as_completed(futures):
@@ -663,6 +679,8 @@ def format_data(data):
         "hid_addedby": "47",
         "h_inventory": "addinventory",
         "auction_name": auction.get('Auction', ''),
+        "drivable": '1' if str(declarations.get('Drivable', '')).lower()=='yes' else '0',
+        "engine_runs" : '0',
         "title_status": declarations.get('Title Status', ''),
         "run_no": data.get('run', ''),
         "pmr": data.get('pmr', ''),
