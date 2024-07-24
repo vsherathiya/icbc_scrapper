@@ -307,7 +307,7 @@ def format_data(data):
         "engine_runs" : '1' if data.get('Engine Runs', '').lower()=='yes' else '0',
         "title_status": declarations.get('Title Status', ''),
         "run_no": data.get('run', ''),
-        "pmr": data.get('pmr', ''),
+        "pmr": ''.join(filter(str.isdigit, data.get('pmr', ''))) ,
         "hid_allimages": data.get('images_bs64', [])}
     # print ('\n--------------------------------\n',formatted_data)
     return formatted_data
