@@ -123,7 +123,7 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
-# chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
+chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
 logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
@@ -215,8 +215,6 @@ def download_image_as_base64(image_url):
 
 def check_first_numeric_value(input_string):
     numbers = re.findall(r'\d+', input_string)
-    
-    # Check if there are any numbers found
     if numbers:
         return "1" if int(numbers[0]) > 0 else "0"
     else:
@@ -224,11 +222,11 @@ def check_first_numeric_value(input_string):
 
 
 def get_iframe_data(driver):
+    new = {}
     try:
         iframe = driver.find_element(By.CLASS_NAME, 'cr-iframe')
         driver.switch_to.frame(iframe)
         spotlight_fields = driver.find_elements(By.CLASS_NAME, 'cr-spotlight-field')
-        new = {}
         for spotlight_field in spotlight_fields:
             try:
                 inner_divs = spotlight_field.find_elements(By.TAG_NAME, 'div')
@@ -253,7 +251,11 @@ def get_iframe_data(driver):
         
         return new
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        
+        print(HTTPException(status_code=500, detail=str(e)))
+        new['Engine runs']='0'
+        new['Keys'] = '0'
+        return new
 
 # Define a model for the request body
 class RequestBody(BaseModel):
@@ -329,29 +331,26 @@ async def parse_links(request_body: RequestBody):
         submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
         submit_button.click()
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(extract_data_from_url, driver, link) for link in request_body.links]
-            for future in as_completed(futures):
-                try:
-                    data = future.result()
-                    if data:
-                        formatted_data = format_data(data)
-                        file_name = f"{formatted_data['vin']}.json"
-                        file_path = os.path.join("data/edge", file_name)
-                        
-                        if not os.path.exists("data/edge"):
-                            os.makedirs("data/edge")
-                        
-                        with open(file_path, 'w') as json_file:
-                            json.dump(formatted_data, json_file, indent=4)
-                        
-                        
-                        parsed_data.append(formatted_data)
-                        insert_data(formatted_data)
-                        call_api(json.dumps(formatted_data))
-                except Exception as e:
-                    logger.error(f"Error Occurred at {CustomException(e, sys)}")
-                    print(CustomException(e, sys))
+        for link in request_body.links:
+            try:
+                data = extract_data_from_url(driver, link)
+                if data:
+                    formatted_data = format_data(data)
+                    file_name = f"{formatted_data['vin']}.json"
+                    file_path = os.path.join("data/edge", file_name)
+                    
+                    if not os.path.exists("data/edge"):
+                        os.makedirs("data/edge")
+                    
+                    with open(file_path, 'w') as json_file:
+                        json.dump(formatted_data, json_file, indent=4)
+                    
+                    parsed_data.append(formatted_data)
+                    insert_data(formatted_data)
+                    call_api(json.dumps(formatted_data))
+            except Exception as e:
+                logger.error(f"Error Occurred at {CustomException(e, sys)}")
+                print(CustomException(e, sys))
         
     finally:
         driver.quit()
@@ -361,7 +360,7 @@ async def parse_links(request_body: RequestBody):
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "https://americanauctionaccess.com/icbc-scrap-api"
+        url = "http://localhost:8080/add_car_info"
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
             return response.json()
@@ -369,7 +368,7 @@ def call_api(data):
             raise Exception(f"Failed to send data to API. Status code: {response.status_code}")
     except requests.exceptions.RequestException as e:
         logger.error(f"Error sending data to API: {CustomException(e, sys)}")
-        raise
+        print(f"Error sending data to API: {CustomException(e, sys)}")
 
 # Function to insert data into the database
 # Function to insert data into the database
