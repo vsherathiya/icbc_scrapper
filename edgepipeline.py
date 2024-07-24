@@ -360,7 +360,7 @@ async def parse_links(request_body: RequestBody):
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "http://localhost:8080/add_car_info"
+        url = "https://americanauctionaccess.com/icbc-scrap-api"
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
             return response.json()
