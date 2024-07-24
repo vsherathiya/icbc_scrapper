@@ -1,459 +1,3 @@
-# # from fastapi import FastAPI, HTTPException
-# # from typing import List
-# # from pydantic import BaseModel
-# # from selenium import webdriver
-# # from selenium.webdriver.common.by import By
-# # from selenium.webdriver.support.ui import WebDriverWait
-# # from selenium.webdriver.support import expected_conditions as EC
-# # from selenium.webdriver.chrome.options import Options
-# # from time import sleep
-# # import requests,base64,os,sys
-
-# # from exception import CustomException, setup_logger
-# # logger = setup_logger("edgepipeline", f"edgepipeline")
-
-# # app = FastAPI()
-
-# # # Set up Chrome WebDriver options
-# # chrome_options = Options()
-# # chrome_options.add_argument("--headless")
-# # chrome_options.add_argument("--disable-gpu")
-# # chrome_options.add_argument("--no-sandbox")
-
-# # # Function to extract data from a single URL
-
-# # # Define a function to extract text using explicit wait
-# # def get_element_text(driver, selector, name):
-# #     try:
-# #         element = WebDriverWait(driver, .05).until(
-# #             EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-# #         )
-# #         text = element.text
-# #     except Exception as e:
-# #         print(f"Error extracting {name}: {e}")
-# #         text = None
-# #     return text
-
-# # def extract_data_from_url(url):
-# #     data = {}
-# #     driver = webdriver.Chrome(options=chrome_options)
-
-# #     try:
-# #         driver.get(url)
-# #         sleep(1)  # Ensure page loads completely
-
-# #         # Function to extract text from an element
-# #         def get_element_text(driver, selector, name):
-# #             try:
-# #                 element = WebDriverWait(driver, .05).until(
-# #                     EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-# #                 )
-# #                 text = element.text
-# #             except Exception as e:
-# #                 print(f"Error extracting {name}: {e}")
-# #                 text = None
-# #             return text
-
-# #         # Extract necessary data from the page
-# #         data['heading'] = get_element_text(driver, "h1.description","heading")
-# #         data['run'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.run-number > span","run")
-# #         data['vin'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.vin > span","vin")
-# #         data['pmr'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.pmr > div > div > span","pmr")
-# #         data['kilometer'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.odometer > span","kilometer")
-
-# #         # Additional extraction functions can be added here for specific sections
-
-# #         # Extracting details, auction, and declarations sections
-# #         data['details'] = extract_section_data(driver, "#vdp > div.sections > div.section.details.closed > div > div", 13)
-# #         data['auction'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.auction.closed > div > div", 6)
-# #         data['declarations'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.declarations.closed > div > div", 4)
-
-# #         data['images_bas64'],data['images_links'] = get_image_sources(driver=driver,name='images')
-
-
-# #     finally:
-# #         driver.quit()
-
-# #     return data
-
-# # # Function to extract data from specific sections
-# # def extract_section_data(driver, section_selector, child_count):
-# #     section_data = {}
-# #     for i in range(1, child_count + 1):
-# #         label_selector = f"{section_selector} > div:nth-child({i}) > label"
-# #         value_selector = f"{section_selector} > div:nth-child({i}) > span"
-# #         label_text = get_element_text(driver, label_selector,i)
-# #         value_text = get_element_text(driver, value_selector,i)
-# #         if label_text and value_text:
-# #             section_data[label_text] = value_text
-# #     return section_data
-
-# # def get_image_sources(driver, name):
-# #     sources = []
-# #     sources_bs64 = []
-# #     try:
-# #         elements = WebDriverWait(driver, 20).until(
-# #             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.fotorama__thumb.fotorama__loaded.fotorama__loaded--img > img"))
-# #         )
-
-
-# #         for element in elements:
-# #             l = element.get_attribute('src')
-# #             l = l.replace('AweDc1Ow', 'YwMHgxMjAwOw')
-# #             sources.append(l)
-# #             sources_bs64.append(download_image_as_base64(l))
-# #         return sources_bs64,sources
-# #     except Exception as e:
-# #         print(f"Error extracting {name}: {e}")
-# #     return sources_bs64,sources
-
-
-# # def download_image_as_base64(image_url):
-# #     try:
-# #         print(f"Downloading image from URL: {image_url}")
-# #         logger.info(f"Downloading image from URL: {image_url}")
-# #         # Download the image
-# #         response = requests.get(image_url)
-# #         response.raise_for_status()
-# #         image_content = response.content
-
-# #         return base64.b64encode(image_content).decode('utf-8')
-# #     except requests.exceptions.RequestException as e:
-# #         print(f"Error downloading image: {e}")
-# #         logger.error(f"Error downloading image: {CustomException(e, sys)}")
-# #         return ''
-
-
-# # # Define a model for the request body
-# # class RequestBody(BaseModel):
-# #     links: List[str]
-
-# # # Define your API endpoint
-# # @app.post("/parse_links/")
-# # def parse_links(request_body: RequestBody):
-# #     parsed_data = []
-
-# #     for link in request_body.links:
-# #         try:
-# #             data = extract_data_from_url(link)
-# #             print(data)
-# #             formatted_data = format_data(data)
-# #             parsed_data.append(formatted_data)
-# #         except Exception as e:
-# #             # Handle any errors that might occur during extraction
-# #             print(f"Error extracting data from {link}: {e}")
-# #             continue
-
-# #     return {"data": parsed_data}
-
-# # # Function to format the extracted data as specified
-# # def format_data(data):
-# #     details = data.get('details', {})
-# #     auction = data.get('auction',{})
-# #     declarations = data.get('declarations',{})
-# #     formatted_data = {
-# #         "cars_type": "10",
-# #         "category": "car",
-# #         "make": data.get('heading').split()[1],
-# #         "model": data.get('heading').split()[2],
-# #         "year": data.get('heading').split()[0],
-# #         "type": data.get('heading').split()[6],
-# #         "status": "Non Brand",
-# #         "vin": f"{details.get('VIN', '')}",
-# #         "fuel_type": f"{details.get('Fuel Type', '')}",
-# #         "transmission": f"{details.get('Transmission', '')}",
-# #         "engine": f"{details.get('Displacement', '')} " +  f"{details.get('Cylinders', '').split(' ')[0].replace('CYL', '')}" + "cyl",
-# #         "cylinders": f"{details.get('Cylinders', '').split(' ')[0].replace('CYL', '')}",
-# #         "drive": f"{details.get('Drive Train', '')}",
-# #         "kilometer": ''.join([char for char in f"{data.get('kilometer', '')}" if char.isdigit()]),
-# #         "mileage_type": "Mile",
-# #         "condition": "",
-# #         "keys": "0" if details.get("Keys Included") == "N" else "1",
-# #         "stock_number":  f"{auction.get('Stock Number', '')}",
-# #         "interior_colour": f"{details.get('Interior Color / Material', '').split(' /')[0]}",
-# #         "exterior_colour": f"{details.get('Color', '')}",
-# #         "accessories": "",
-# #         "currency": "USD",
-# #         "price": "1",
-# #         "country": "USA",
-# #         "state": f"{auction.get('Location', '')}".split(", ")[1],
-# #         "city" : f"{auction.get('Location', '')}".split(", ")[0],
-# #         "auction_name":f"{auction.get('Auction', '')} "  ,
-# #         "title_status": f"{declarations.get('Title Status', '')}",
-# #         "run_no": f"{data.get('run', '')}",
-# #         "pmr": f"{data.get('pmr', '')}",
-# #         "images_links" : f"{data.get('images_links',[])}",
-# #         "images_bs64" : f"{data.get('images_bas64',[])}"
-
-# #     }
-# #     return formatted_data
-
-# # if __name__ == "__main__":
-# #     import uvicorn
-# #     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-# # =====================================================================
-# # =====================================================================
-
-
-# from fastapi import FastAPI, HTTPException
-# from typing import List
-# from pydantic import BaseModel
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
-# from selenium.webdriver.chrome.options import Options
-# from time import sleep, time
-# import requests
-# import sys,os,json
-# import base64
-# from concurrent.futures import ThreadPoolExecutor, as_completed
-# import logging
-# from exception import CustomException, setup_logger
-
-# logger = setup_logger("edgepipeline", f"edgepipeline.log")
-
-# app = FastAPI()
-
-# # Set up Chrome WebDriver options
-# chrome_options = Options()
-# chrome_options.add_argument("--headless")
-# chrome_options.add_argument("--disable-gpu")
-# chrome_options.add_argument("--no-sandbox")
-
-# # Function to extract text using explicit wait
-
-
-# def get_element_text(driver, selector, name):
-#     try:
-#         element = WebDriverWait(driver, 0.5).until(
-#             EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-#         )
-#         return element.text
-#     except Exception as e:
-#         logger.error(f"Error extracting {name}: {e}")
-#         return None
-
-# # Function to extract data from a single URL
-
-
-# def extract_data_from_url(url):
-#     data = {}
-#     start_time = time()
-#     driver = webdriver.Chrome(options=chrome_options)
-#     try:
-#         driver.get(url)
-#         sleep(1)  # Ensure page loads completely
-
-#         data['heading'] = get_element_text(driver, "h1.description", "heading")
-#         data['run'] = get_element_text(
-#             driver, "#vdp > div.overview > div.general-section > div.cell.run-number > span", "run")
-#         data['vin'] = get_element_text(
-#             driver, "#vdp > div.overview > div.general-section > div.cell.vin > span", "vin")
-#         data['pmr'] = get_element_text(
-#             driver, "#vdp > div.overview > div.general-section > div.cell.pmr > div > div > span", "pmr")
-#         data['kilometer'] = get_element_text(
-#             driver, "#vdp > div.overview > div.general-section > div.cell.odometer > span", "kilometer")
-
-#         data['details'] = extract_section_data(
-#             driver, "#vdp > div.sections > div.section.details.closed > div > div", 13)
-#         data['auction'] = extract_section_data(
-#             driver, "#vdp > div.sections > div.section-group > div.section.auction.closed > div > div", 6)
-#         data['declarations'] = extract_section_data(
-#             driver, "#vdp > div.sections > div.section-group > div.section.declarations.closed > div > div", 4)
-
-#         data['images_bs64'], data['images_links'] = get_image_sources(
-#             driver=driver, name='images')
-
-#         elapsed_time = time() - start_time
-#         logger.info(f"Extracted data from {url} in {elapsed_time:.2f} seconds")
-#     except Exception as e:
-#         logger.error(
-#             f"Error extracting data from {url}: {CustomException(e, sys)}")
-#     finally:
-#         driver.quit()
-#     return data
-
-# # Function to extract data from specific sections
-
-
-# def extract_section_data(driver, section_selector, child_count):
-#     section_data = {}
-#     for i in range(1, child_count + 1):
-#         label_selector = f"{section_selector} > div:nth-child({i}) > label"
-#         value_selector = f"{section_selector} > div:nth-child({i}) > span"
-#         label_text = get_element_text(driver, label_selector, f"label_{i}")
-#         value_text = get_element_text(driver, value_selector, f"value_{i}")
-#         if label_text and value_text:
-#             section_data[label_text] = value_text
-#     return section_data
-
-# # Function to get image sources
-
-
-# def get_image_sources(driver, name):
-#     sources_bs64 = []
-#     sources = []
-#     try:
-#         elements = WebDriverWait(driver, 20).until(
-#             EC.presence_of_all_elements_located(
-#                 (By.CSS_SELECTOR, "div.fotorama__thumb.fotorama__loaded.fotorama__loaded--img > img"))
-#         )
-
-#         for element in elements:
-#             l = element.get_attribute('src')
-#             l = l.replace('AweDc1Ow', 'YwMHgxMjAwOw')
-#             sources.append(l)
-#             sources_bs64.append(download_image_as_base64(l))
-#         return sources_bs64, sources
-#     except Exception as e:
-#         logger.error(f"Error extracting {name}: {e}")
-#     return sources_bs64, sources
-
-# # Function to download image as base64
-
-
-# def download_image_as_base64(image_url):
-#     try:
-#         logger.info(f"Downloading image from URL: {image_url}")
-#         response = requests.get(image_url)
-#         response.raise_for_status()
-#         image_content = response.content
-#         return base64.b64encode(image_content).decode('utf-8')
-#     except requests.exceptions.RequestException as e:
-#         logger.error(f"Error downloading image: {CustomException(e, sys)}")
-#         return ''
-
-# # Define a model for the request body
-
-
-# class RequestBody(BaseModel):
-#     links: List[str]
-
-# # Define your API endpoint
-
-
-# @app.post("/parse_links/")
-# async def parse_links(request_body: RequestBody):
-#     parsed_data = []
-#     with ThreadPoolExecutor(max_workers=5) as executor:
-#         futures = [executor.submit(extract_data_from_url, link)
-#                    for link in request_body.links]
-#         for future in as_completed(futures):
-#             try:
-#                 data = future.result()
-#                 if data:
-#                     formatted_data = format_data(data)
-#                     parsed_data.append(formatted_data)
-#             except Exception as e:
-#                 logger.error(
-#                     f"Error processing URL: {CustomException(e, sys)}")
-#     return {"data": parsed_data}
-
-
-# def call_api(data):
-#     try:
-#         headers = {'accept': 'application/json',
-#                    'Content-Type': 'application/json'}
-#         url = "http://localhost:8080/add_car_info"
-#         response = requests.post(url, headers=headers, data=data)
-#         print(response.status_code)
-#         if response.status_code == 200:
-#             logger.info("Data successfully sent to API")
-#             print("Data successfully sent to API")
-#             return f"successful status code - {response.status_code}"
-#         else:
-#             print(
-#                 f"Failed to send data to API. Status code: {response.status_code}")
-#             return f"Failed status code - {response.status_code}"
-#     except Exception as e:
-#         logger.error(f"Error Occurred at {CustomException(e, sys)}")
-#         print(CustomException(e, sys))
-#         return "None"
-
-# # Function to format the extracted data
-
-
-# from datetime import datetime
-
-# def convert_date_format(date_str):
-#     # Parse the input date string
-#     input_date = datetime.strptime(date_str, '%a, %m/%d/%y')
-    
-#     # Format the date to the desired output format
-#     output_date = input_date.strftime('%Y-%m-%d')
-    
-#     return output_date
-
-# def format_data(data):
-#     details = data.get('details', {})
-#     auction = data.get('auction', {})
-#     declarations = data.get('declarations', {})
-#     formatted_data = {
-#         "cars_type": "10",
-#         "category": "car",
-#         "make": data.get('heading').split()[1],
-#         "model": data.get('heading').split()[2],
-#         "year": data.get('heading').split()[0],
-#         "type": data.get('heading').split()[6],
-#         "status": "Non Brand",
-#         "vin": f"{details.get('VIN', '')}",
-#         "fuel_type": f"{details.get('Fuel Type', '')}",
-#         "transmission": f"{details.get('Transmission', '')}",
-#         "engine": f"{details.get('Displacement', '')} {details.get('Cylinders', '').split(' ')[0].replace('CYL', '')}cyl",
-#         "cylinders": f"{details.get('Cylinders', '').split(' ')[0].replace('CYL', '')}",
-#         "drive": f"{details.get('Drive Train', '')}",
-#         "kilometer": ''.join([char for char in f"{data.get('kilometer', '')}" if char.isdigit()]),
-#         "mileage_type": "Mile",
-#         "condition": "",
-#         "keys": "0" if details.get("Keys Included") == "N" else "1",
-#         "stock_number": f"{auction.get('Stock Number', '')}",
-#         "interior_colour": f"{details.get('Interior Color / Material', '').split(' /')[0]}",
-#         "exterior_colour": f"{details.get('Color', '')}",
-#         "accessories": "",
-#         "currency": "USD",
-#         "price": "1",
-#         "country": "USA",
-#         "state": f"{auction.get('Location', '')}".split(", ")[1],
-#         "city": f"{auction.get('Location', '')}".split(", ")[0],
-#         "auction_date": f"{convert_date_format(auction.get('Sale Date', '').split(' (')[0])}",
-#         "purchase_option": "0",
-#         "hid_main_images": "",
-#         "hid_addedtype": "2",
-#         "hid_addedby": "47",
-#         "h_inventory": "addinventory",
-#         "auction_name": f"{auction.get('Auction', '')}",
-#         "title_status": f"{declarations.get('Title Status', '')}",
-#         "run": f"{data.get('run', '')}",
-#         "pmr": f"{data.get('pmr', '')}",
-#         "hid_allimages": data.get('images_bs64', [])
-#     }
-    
-#     file_name = f"{data['stock_number']}.json"
-#     file_path = os.path.join("data/edge", file_name)
-
-#     if not os.path.exists("data/edge"):
-#         os.makedirs("data/edge")
-
-#     with open(file_path, 'w') as json_file:
-#         json.dump(formatted_data, json_file, indent=4)
-#     # print(data)
-#     json_data = json.dumps(formatted_data)
-#     if len(formatted_data['hid_allimages'])>0:
-#         status_code = call_api(json_data)
-    
-#     return [formatted_data,status_code]
-
-
-# # Initialize the WebDriver
-# driver = webdriver.Chrome(options=chrome_options)
-
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
-
 from fastapi import FastAPI, HTTPException
 from typing import List
 from pydantic import BaseModel
@@ -463,14 +7,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import requests
-import sys, os, json
+import sys, os, json,re
 import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from datetime import datetime
+from time import sleep, time
+import mysql.connector
+from mysql.connector import Error
+
+# Custom exception and logger setup
 from exception import CustomException, setup_logger
-from time import sleep,time
-logger = setup_logger("edgepipeline", f"edgepipeline")
+
+logger = setup_logger("edgepipeline", "edgepipeline")
 
 app = FastAPI()
 
@@ -489,13 +38,92 @@ db_config = {
 #    'database': 'icbc_scrapper_DB',   # Replace with your database name
 #    'port': 3306
 # }
+def convert_date_format(date_str):
+    try:
+        input_date = datetime.strptime(date_str, '%a, %m/%d/%y')
+        return input_date.strftime('%Y-%m-%d')
+    except ValueError as e:
+        logger.error(f"Date conversion error: {e}")
+#         return ''
+
+# Create database tables if they don't exist
+def create_tables():
+    connection = mysql.connector.connect(
+        host=db_config['host'],
+        user=db_config['user'],
+        password=db_config['password'],
+        database=db_config['database'],
+        port=db_config['port']
+    )
+    cursor = connection.cursor()
+
+    create_vehicles_table = """
+    CREATE TABLE IF NOT EXISTS vehicles__ (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cars_type VARCHAR(50),
+        category VARCHAR(50),
+        make VARCHAR(50),
+        model VARCHAR(50),
+        year VARCHAR(4),
+        type VARCHAR(50),
+        status VARCHAR(50),
+        vin VARCHAR(50) UNIQUE,
+        fuel_type VARCHAR(50),
+        transmission VARCHAR(50),
+        engine VARCHAR(50),
+        cylinders VARCHAR(50),
+        drive VARCHAR(50),
+        kilometer VARCHAR(50),
+        mileage_type VARCHAR(50),
+        `condition` VARCHAR(50),
+        `keys` VARCHAR(100),
+        stock_number VARCHAR(50),
+        interior_colour VARCHAR(50),
+        exterior_colour VARCHAR(50),
+        accessories VARCHAR(100),
+        currency VARCHAR(3),
+        price VARCHAR(100),
+        country VARCHAR(50),
+        state VARCHAR(50),
+        city VARCHAR(50),
+        auction_date VARCHAR(100),
+        purchase_option VARCHAR(100),
+        hid_addedtype VARCHAR(50),
+        hid_addedby VARCHAR(50),
+        h_inventory VARCHAR(50),
+        auction_name VARCHAR(100),
+        drivable VARCHAR(100),
+        engine_runs VARCHAR(100),
+        title_status VARCHAR(50),
+        run_no VARCHAR(50),
+        pmr VARCHAR(50)
+    );
+    """
+
+    create_vehicle_images_table = """
+    CREATE TABLE IF NOT EXISTS vehicle_images__ (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        vin VARCHAR(50),
+        image_base64 LONGTEXT,
+        FOREIGN KEY (vin) REFERENCES vehicles__(vin) ON DELETE CASCADE
+    );
+    """
+
+    cursor.execute(create_vehicles_table)
+    cursor.execute(create_vehicle_images_table)
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+# Initialize tables
+
 
 # Set up Chrome WebDriver options
 chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
-chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
+# chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
 logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
@@ -506,6 +134,8 @@ def get_element_text(driver, selector, name):
         )
         return element.text
     except Exception as e:
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        print(CustomException(e, sys))
         logger.error(f"Error extracting {name}: {e}")
         return None
 
@@ -526,12 +156,16 @@ def extract_data_from_url(driver, url):
         data['details'] = extract_section_data(driver, "#vdp > div.sections > div.section.details.closed > div > div", 13)
         data['auction'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.auction.closed > div > div", 6)
         data['declarations'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.declarations.closed > div > div", 4)
-        
+        print(data)
         data['images_bs64'], data['images_links'] = get_image_sources(driver, 'images')
 
         elapsed_time = time() - start_time
+        new = get_iframe_data(driver)
+        data.update(new)
         logger.info(f"Extracted data from {url} in {elapsed_time:.2f} seconds")
     except Exception as e:
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        print(CustomException(e, sys))
         logger.error(f"Error extracting data from {url}: {CustomException(e, sys)}")
     return data
 
@@ -562,6 +196,8 @@ def get_image_sources(driver, name):
             sources_bs64.append(download_image_as_base64(img_url))
         return sources_bs64, sources
     except Exception as e:
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        print(CustomException(e, sys))
         logger.error(f"Error extracting {name}: {e}")
     return sources_bs64, sources
 
@@ -571,77 +207,63 @@ def download_image_as_base64(image_url):
         logger.info(f"Downloading image from URL: {image_url}")
         response = requests.get(image_url)
         response.raise_for_status()
+        print('Done-->',image_url)
         return base64.b64encode(response.content).decode('utf-8')
     except requests.exceptions.RequestException as e:
         logger.error(f"Error downloading image: {CustomException(e, sys)}")
         return ''
 
+def check_first_numeric_value(input_string):
+    numbers = re.findall(r'\d+', input_string)
+    
+    # Check if there are any numbers found
+    if numbers:
+        return "1" if int(numbers[0]) > 0 else "0"
+    else:
+        return "0"
+
+
+def get_iframe_data(driver):
+    try:
+        iframe = driver.find_element(By.CLASS_NAME, 'cr-iframe')
+        driver.switch_to.frame(iframe)
+        spotlight_fields = driver.find_elements(By.CLASS_NAME, 'cr-spotlight-field')
+        new = {}
+        for spotlight_field in spotlight_fields:
+            try:
+                inner_divs = spotlight_field.find_elements(By.TAG_NAME, 'div')
+                for div in inner_divs:
+                    span_texts = []
+                    spans = div.find_elements(By.TAG_NAME, 'span')
+                    for span in spans:
+                        span_texts.append(span.text)
+                    div_text = div.text
+                    for span_text in span_texts:
+                        div_text = div_text.replace(span_text, '').strip()
+                    if "Engine Runs" in span_texts or "Keys" in span_texts:
+                        if"Keys" in span_texts:
+                            div_text = check_first_numeric_value(div_text)
+                        new[span_text]=div_text
+                        
+                        
+                print(new)        
+            except Exception as e:
+                new['Engine runs']='0'
+                new['Keys'] = '0'
+        
+        return new
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Define a model for the request body
 class RequestBody(BaseModel):
-    id : str 
-    password : str 
+    id: str
+    password: str
     links: List[str]
-
-# Define your API endpoint
-@app.post("/parse_links/")
-async def parse_links(request_body: RequestBody):
-    parsed_data = []
-    driver = webdriver.Chrome(options=chrome_options)
-    try:
-        driver.get('https://www.edgepipeline.com/components/login')  # Replace with the actual login URL
-
-        # Find the username and password input elements and fill them
-        username_input = driver.find_element(By.ID, 'username')
-        password_input = driver.find_element(By.ID, 'password')
-
-        username_input.send_keys(request_body.id)  # Replace with actual username
-        password_input.send_keys(request_body.password)  # Replace with actual password
-
-        # Submit the form
-        submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
-        submit_button.click()
-        
-        
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(extract_data_from_url, driver, link) for link in request_body.links]
-            for future in as_completed(futures):
-                try:
-                    data = future.result()
-                    if data:
-                        formatted_data = format_data(data)
-                        parsed_data.append(formatted_data)
-                except Exception as e:
-                    logger.error(f"Error processing URL: {CustomException(e, sys)}")
-    finally:
-        driver.quit()
-    return parsed_data
-
-# Function to call an external API
-def call_api(data):
-    try:
-        headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "https://americanauctionaccess.com/icbc-scrap-api"
-        response = requests.post(url, headers=headers, data=data)
-        if response.status_code == 200:
-            logger.info("Data successfully sent to API")
-            return f"successful status code - {response.status_code}"
-        else:
-            logger.error(f"Failed to send data to API. Status code: {response.status_code}")
-            return f"Failed status code - {response.status_code}"
-    except Exception as e:
-        logger.error(f"Error Occurred at {CustomException(e, sys)}")
-        return "None"
-
-# Function to format the extracted data
-def convert_date_format(date_str):
-    try:
-        input_date = datetime.strptime(date_str, '%a, %m/%d/%y')
-        return input_date.strftime('%Y-%m-%d')
-    except ValueError as e:
-        logger.error(f"Date conversion error: {e}")
-        return ''
-
+    
+    
 def format_data(data):
+    # print(data)
     details = data.get('details', {})
     auction = data.get('auction', {})
     declarations = data.get('declarations', {})
@@ -662,7 +284,7 @@ def format_data(data):
         "kilometer": ''.join(filter(str.isdigit, data.get('kilometer', ''))),
         "mileage_type": "Mile",
         "condition": "",
-        "keys": "0" if details.get("Keys Included") == "N" else "1",
+        "keys": "0" if data.get("Keys") == "0" else "1",
         "stock_number": auction.get('Stock Number', ''),
         "interior_colour": details.get('Interior Color / Material', '').split(' /')[0],
         "exterior_colour": details.get('Color', ''),
@@ -680,26 +302,137 @@ def format_data(data):
         "h_inventory": "addinventory",
         "auction_name": auction.get('Auction', ''),
         "drivable": '1' if str(declarations.get('Drivable', '')).lower()=='yes' else '0',
-        "engine_runs" : '0',
+        "engine_runs" : '1' if data.get('Engine Runs', '').lower()=='yes' else '0',
         "title_status": declarations.get('Title Status', ''),
         "run_no": data.get('run', ''),
         "pmr": data.get('pmr', ''),
-        "hid_allimages": data.get('images_bs64', [])
-    }
-    
-    file_name = f"{formatted_data['stock_number']}.json"
-    file_path = os.path.join("data/edge", file_name)
-
-    if not os.path.exists("data/edge"):
-        os.makedirs("data/edge")
-
-    with open(file_path, 'w') as json_file:
-        json.dump(formatted_data, json_file, indent=4)
-
-    if formatted_data['hid_allimages']:
-        status_code = call_api(json.dumps(formatted_data))
-    
+        "hid_allimages": data.get('images_bs64', [])}
+    # print ('\n--------------------------------\n',formatted_data)
     return formatted_data
+
+# Define your API endpoint
+@app.post("/parse_links/")
+async def parse_links(request_body: RequestBody):
+    parsed_data = []
+    driver = webdriver.Chrome(options=chrome_options)
+    try:
+        driver.get('https://www.edgepipeline.com/components/login')  # Replace with the actual login URL
+
+        # Find the username and password input elements and fill them
+        username_input = driver.find_element(By.ID, 'username')
+        password_input = driver.find_element(By.ID, 'password')
+
+        username_input.send_keys(request_body.id)  # Replace with actual username
+        password_input.send_keys(request_body.password)  # Replace with actual password
+
+        # Submit the form
+        submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
+        submit_button.click()
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(extract_data_from_url, driver, link) for link in request_body.links]
+            for future in as_completed(futures):
+                try:
+                    data = future.result()
+                    if data:
+                        formatted_data = format_data(data)
+                        file_name = f"{formatted_data['vin']}.json"
+                        file_path = os.path.join("data/edge", file_name)
+                        
+                        if not os.path.exists("data/edge"):
+                            os.makedirs("data/edge")
+                        
+                        with open(file_path, 'w') as json_file:
+                            json.dump(formatted_data, json_file, indent=4)
+                        
+                        
+                        parsed_data.append(formatted_data)
+                        insert_data(formatted_data)
+                        call_api(json.dumps(formatted_data))
+                except Exception as e:
+                    logger.error(f"Error Occurred at {CustomException(e, sys)}")
+                    print(CustomException(e, sys))
+        
+    finally:
+        driver.quit()
+    return parsed_data
+
+# Function to call an external API
+def call_api(data):
+    try:
+        headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
+        url = "http://localhost:8080/add_car_info"
+        response = requests.post(url, headers=headers, data=data)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to send data to API. Status code: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error sending data to API: {CustomException(e, sys)}")
+        raise
+
+# Function to insert data into the database
+# Function to insert data into the database
+def insert_data(data):
+    connection = None
+    cursor = None
+    create_tables()
+    try:
+        connection = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            port=db_config['port']
+        )
+        cursor = connection.cursor()
+
+        # Prepare data excluding images
+        vehicle_data = {key: data[key] for key in data if key != 'hid_allimages'}
+        
+        insert_query = """
+        INSERT INTO vehicles__ (
+            cars_type, category, make, model, year, type, status, vin, fuel_type, transmission, engine, cylinders, drive,
+            kilometer, mileage_type, `condition`, `keys`, stock_number, interior_colour, exterior_colour, accessories, currency, price, country, state, city,
+            auction_date, purchase_option, hid_addedtype, hid_addedby, h_inventory, auction_name, drivable, engine_runs, title_status,
+            run_no, pmr
+        ) VALUES (
+            %(cars_type)s, %(category)s, %(make)s, %(model)s, %(year)s, %(type)s, %(status)s, %(vin)s, %(fuel_type)s, %(transmission)s, 
+            %(engine)s, %(cylinders)s, %(drive)s, %(kilometer)s, %(mileage_type)s, %(condition)s, %(keys)s, %(stock_number)s, 
+            %(interior_colour)s, %(exterior_colour)s, %(accessories)s, %(currency)s, %(price)s, %(country)s, %(state)s, %(city)s, 
+            %(auction_date)s, %(purchase_option)s, %(hid_addedtype)s, %(hid_addedby)s, %(h_inventory)s, %(auction_name)s, %(drivable)s, 
+            %(engine_runs)s, %(title_status)s, %(run_no)s, %(pmr)s
+        )
+        ON DUPLICATE KEY UPDATE 
+            category=VALUES(category), make=VALUES(make), model=VALUES(model), year=VALUES(year), type=VALUES(type), 
+            status=VALUES(status), fuel_type=VALUES(fuel_type), transmission=VALUES(transmission), engine=VALUES(engine), cylinders=VALUES(cylinders), 
+            drive=VALUES(drive), kilometer=VALUES(kilometer), mileage_type=VALUES(mileage_type), `condition`=VALUES(`condition`), 
+            `keys`=VALUES(`keys`), stock_number=VALUES(stock_number), interior_colour=VALUES(interior_colour), exterior_colour=VALUES(exterior_colour), 
+            accessories=VALUES(accessories), currency=VALUES(currency), price=VALUES(price), country=VALUES(country), state=VALUES(state), 
+            city=VALUES(city), auction_date=VALUES(auction_date), purchase_option=VALUES(purchase_option),  
+            hid_addedtype=VALUES(hid_addedtype), hid_addedby=VALUES(hid_addedby), h_inventory=VALUES(h_inventory), auction_name=VALUES(auction_name), 
+            drivable=VALUES(drivable), engine_runs=VALUES(engine_runs), title_status=VALUES(title_status), run_no=VALUES(run_no), pmr=VALUES(pmr)
+        """
+
+        cursor.execute(insert_query, vehicle_data)
+        
+        # Insert images separately
+        vehicle_vin = data.get('vin')
+        for image_base64 in data.get('hid_allimages', []):
+            cursor.execute("""
+                INSERT INTO vehicle_images__ (vin, image_base64) VALUES (%s, %s)
+            """, (vehicle_vin, image_base64))
+
+        connection.commit()
+        logger.info(f"Inserted data for vehicle with VIN: {data.get('vin')}")
+    except Error as e:
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        print(CustomException(e, sys))
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 if __name__ == "__main__":
     import uvicorn

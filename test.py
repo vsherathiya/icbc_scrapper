@@ -26,6 +26,8 @@ class CarInfo(BaseModel):
     mileage_type: str
     condition: str
     keys: str
+    engine_runs :str
+    drivable : str
     stock_number: str
     interior_colour: str
     exterior_colour: str
@@ -44,7 +46,7 @@ class CarInfo(BaseModel):
     hid_allimages: list[str]
     auction_name: str
     title_status: str
-    run: str
+    run_no: str
     pmr: str
 
 
