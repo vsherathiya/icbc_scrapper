@@ -563,7 +563,7 @@ logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 # Function to extract text using explicit wait
 def get_element_text(driver, selector, name):
     try:
-        element = WebDriverWait(driver, 0.5).until(
+        element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, selector))
         )
         return element.text
@@ -804,7 +804,7 @@ async def parse_links(request_body: RequestBody):
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "http://localhost:8080/add_car_info"
+        url = "https://americanauctionaccess.com/icbc-scrap-api"
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
             return response.json()
