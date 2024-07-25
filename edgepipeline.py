@@ -746,22 +746,22 @@ def format_data(data):
     # print ('\n--------------------------------\n',formatted_data)
     return formatted_data
 # Define your API endpoint
-@app.post("/parse_links/")
-async def parse_links(request_body: RequestBody):
-    parsed_data = []
-    driver = webdriver.Chrome(options=chrome_options)
+
+def call(driver,id,password,links):
     try:
+        parsed_data = []
         driver.get('https://www.edgepipeline.com/components/login')  # Replace with the actual login URL
         # Find the username and password input elements and fill them
         username_input = driver.find_element(By.ID, 'username')
         password_input = driver.find_element(By.ID, 'password')
-        username_input.send_keys(request_body.id)  # Replace with actual username
-        password_input.send_keys(request_body.password)  # Replace with actual password
+        username_input.send_keys(id)  # Replace with actual username
+        password_input.send_keys(password)  # Replace with actual password
         # Submit the form
         submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
         submit_button.click()
-        for link in request_body.links:
+        for link in links:
             try:
+                yield "\n\n"+link+"\n\n"
                 data = extract_data_from_url(driver, link)
                 if data:
                     formatted_data = format_data(data)
@@ -777,18 +777,34 @@ async def parse_links(request_body: RequestBody):
                     parsed_data.append(formatted_data)
                     insert_data(formatted_data)
                     call_api(json.dumps(formatted_data))
+                    del formatted_data['hid_allimages']
+                    yield(f"\n\n {json.dumps(formatted_data)}\n")
             except Exception as e:
+                yield "error"
+                logger.error(f"Error Occurred at {CustomException(e, sys)}")
+                print(CustomException(e, sys))
+    finally:
+        driver.quit()
+        yield "\n\ncompleted"
+        
+from fastapi.responses import StreamingResponse  
+@app.post("/parse_links/")
+async def parse_links(request_body: RequestBody):
+    try:
+        # call(request_body.id,request_body.password)
+        driver = webdriver.Chrome(options=chrome_options)
+        
+        return StreamingResponse(call(driver,request_body.id,request_body.password ,request_body.links), media_type="text/plain")
+    except Exception as e:
                 logger.error(f"Error Occurred at {CustomException(e, sys)}")
                 print(CustomException(e, sys))
         
-    finally:
-        driver.quit()
-    return parsed_data
+    
 # Function to call an external API
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "https://americanauctionaccess.com/icbc-scrap-api"
+        url = "http://localhost:8080/add_car_info"
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
             return response.json()
