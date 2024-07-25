@@ -348,7 +348,7 @@ def extract_structured_data(details):
         model = f"""{details.get("Model/Sub", "").split("/")[0]}"""
         year = f"""{details.get("Vehicle Year", "")}"""
         type = "Coupe" if "2DCPE" in f"""{details.get("Body Style", "")}""" else ""
-        status = "Damaged"
+        status = "21"
         vin = f"""{details.get("Serial Number", "")}"""
         fuel_type = f"""{details.get("Fuel Type", "")}"""
         transmission = f"""{details.get("Transmission", "")}"""
