@@ -458,20 +458,20 @@ from exception import CustomException, setup_logger
 logger = setup_logger("edgepipeline", "edgepipeline")
 app = FastAPI()
 # Database configuration
-db_config = {
-    'host': 'localhost',  # Replace with your database host
-    'user': 'root',  # Replace with your database user
-    'password': '',  # Replace with your database password
-    'database': 'scrap_data',  # Replace with your database name
-    'port': 3307
-}
 # db_config = {
-#    'host': 'localhost',        # Replace with your database host
-#    'user': 'icbc_scrapper',             # Replace with your database user
-#    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
-#    'database': 'icbc_scrapper_DB',   # Replace with your database name
-#    'port': 3306
+#     'host': 'localhost',  # Replace with your database host
+#     'user': 'root',  # Replace with your database user
+#     'password': '',  # Replace with your database password
+#     'database': 'scrap_data',  # Replace with your database name
+#     'port': 3307
 # }
+db_config = {
+   'host': 'localhost',        # Replace with your database host
+   'user': 'icbc_scrapper',             # Replace with your database user
+   'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
+   'database': 'icbc_scrapper_DB',   # Replace with your database name
+   'port': 3306
+}
 def convert_date_format(date_str):
     try:
         input_date = datetime.strptime(date_str, '%a, %m/%d/%y')
@@ -557,7 +557,7 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
-# chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
+chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
 logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
@@ -788,7 +788,7 @@ async def parse_links(request_body: RequestBody):
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "http://localhost:8080/add_car_info"
+        url = "https://americanauctionaccess.com/icbc-scrap-api"
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
             return response.json()
