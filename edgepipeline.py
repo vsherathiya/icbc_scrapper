@@ -25,17 +25,17 @@ app = FastAPI()
 
 # Database configuration
 # db_config = {
-#     'host': 'localhost',  # Replace with your database host
-#     'user': 'root',  # Replace with your database user
-#     'password': '',  # Replace with your database password
-#     'database': 'scrap_data',  # Replace with your database name
+#     'host': 'localhost',  
+#     'user': 'root',  
+#     'password': '',  
+#     'database': 'scrap_data',  
 #     'port': 3307
 # }
 db_config = {
-   'host': 'localhost',        # Replace with your database host
-   'user': 'icbc_scrapper',             # Replace with your database user
-   'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
-   'database': 'icbc_scrapper_DB',   # Replace with your database name
+   'host': 'localhost',
+   'user': 'icbc_scrapper',
+   'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',
+   'database': 'icbc_scrapper_DB',
    'port': 3306
 }
 def convert_date_format(date_str):
@@ -293,7 +293,7 @@ def format_data(data):
         "accessories": "",
         "currency": "USD",
         "price": "1",
-        "country": "USA",
+        "country": "1",
         "state": auction.get('Location', '').split(", ")[1],
         "city": auction.get('Location', '').split(", ")[0],
         "auction_date": f"{convert_date_format(auction.get('Sale Date', '').split(' (')[0])}",

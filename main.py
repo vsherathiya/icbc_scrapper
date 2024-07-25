@@ -365,8 +365,8 @@ def extract_structured_data(details):
         accessories = ""
         currency = "CAD"
         price = "1"
-        country = "Canada"
-        state = "British Columbia"
+        country = "2"
+        state = "4"
         location = details.get("Location", "")
         location_parts = location.split(", ")
 
