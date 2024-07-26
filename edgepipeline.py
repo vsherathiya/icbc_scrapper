@@ -438,6 +438,7 @@
 #     uvicorn.run(app, host="0.0.0.0", port=3034)
 from fastapi import FastAPI, HTTPException
 from typing import List
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -479,7 +480,7 @@ def convert_date_format(date_str):
     except ValueError as e:
         logger.error(f"Date conversion error: {e}")
 #         return ''
-
+driver = None
 # Create database tables if they don't exist
 def create_tables():
     connection = mysql.connector.connect(
@@ -579,8 +580,8 @@ def extract_data_from_url(driver, url):
     start_time = time()
     try:
         driver.get(url)
-        sleep(1)
-        
+        sleep(1.5)
+
         data['heading'] = get_element_text(driver, "h1.description", "heading")
         data['run'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.run-number > span", "run")
         data['vin'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.vin > span", "vin")
@@ -678,11 +679,11 @@ def get_iframe_data(driver):
                         new[span_text]=div_text
                         
                         
-                print(new)        
             except Exception as e:
                 new['Engine runs']='0'
                 new['Keys'] = '0'
-        
+
+        print(new)
         return new
     except Exception as e:
         
@@ -699,11 +700,11 @@ class RequestBody(BaseModel):
     
     
 def format_data(data):
-    # print(data)
-    details = data.get('details', {})
-    auction = data.get('auction', {})
-    declarations = data.get('declarations', {})
-    formatted_data = {
+    try:
+        details = data.get('details', {})
+        auction = data.get('auction', {})
+        declarations = data.get('declarations', {})
+        formatted_data = {
         "cars_type": "10",
         "category": "car",
         "make": data.get('heading').split()[1],
@@ -711,7 +712,7 @@ def format_data(data):
         "year": data.get('heading').split()[0],
         "type": data.get('heading').split()[6],
         "status": "724",
-        "vin": details.get('VIN', ''),
+        "vin": data.get('vin', ''),
         "fuel_type": details.get('Fuel Type', ''),
         "transmission": details.get('Transmission', ''),
         "engine": f"{details.get('Displacement', '')} {details.get('Cylinders', '').split(' ')[0].replace('CYL', '')}cyl",
@@ -743,9 +744,13 @@ def format_data(data):
         "run_no": data.get('run', ''),
         "pmr": ''.join(filter(str.isdigit, data.get('pmr', ''))) ,
         "hid_allimages": data.get('images_bs64', [])}
-    # print ('\n--------------------------------\n',formatted_data)
-    return formatted_data
-# Define your API endpoint
+        # print ('\n--------------------------------\n',formatted_data)
+        return formatted_data
+    except Exception as e:
+        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        print(CustomException(e, sys))
+        return {}
+    # Define your API endpoint
 
 def call(driver,id,password,links):
     try:
@@ -761,43 +766,63 @@ def call(driver,id,password,links):
         submit_button.click()
         for link in links:
             try:
-                yield "\n\n"+link+"\n\n"
+                print("\n\n===>Link--"+link+"\n\n")
+                logger.info("\n\n===>Link--"+link+"\n\n")
+                yield "\n\n==>Link--"+link+"\n\n"
                 data = extract_data_from_url(driver, link)
                 if data:
+                    print(data.keys())
                     formatted_data = format_data(data)
-                    file_name = f"{formatted_data['vin']}.json"
+                    file_name = f"{formatted_data.get('vin','  ')}.json"
                     file_path = os.path.join("data/edge", file_name)
-                    
+
                     if not os.path.exists("data/edge"):
                         os.makedirs("data/edge")
-                    
+
                     with open(file_path, 'w') as json_file:
                         json.dump(formatted_data, json_file, indent=4)
-                    
+
                     parsed_data.append(formatted_data)
                     insert_data(formatted_data)
                     call_api(json.dumps(formatted_data))
                     del formatted_data['hid_allimages']
+                    print(f"\n\n {json.dumps(formatted_data)}\n")
+                    logger.info(f"\n\n {json.dumps(formatted_data)}\n")
                     yield(f"\n\n {json.dumps(formatted_data)}\n")
             except Exception as e:
+                print("error")
+                logger.error("error")
                 yield "error"
                 logger.error(f"Error Occurred at {CustomException(e, sys)}")
                 print(CustomException(e, sys))
     finally:
         driver.quit()
+        logger.info("\n\ncompleted")
         yield "\n\ncompleted"
-        
-from fastapi.responses import StreamingResponse  
+
+def close_browser():
+    if driver:
+        driver.quit()
+        print("Closed the browser.")
+        logger.info("Closed the browser.")
+        return "Stopping Scrapping"
+
+
 @app.post("/parse_links/")
 async def parse_links(request_body: RequestBody):
     try:
         # call(request_body.id,request_body.password)
+        global driver
         driver = webdriver.Chrome(options=chrome_options)
-        
+
         return StreamingResponse(call(driver,request_body.id,request_body.password ,request_body.links), media_type="text/plain")
     except Exception as e:
                 logger.error(f"Error Occurred at {CustomException(e, sys)}")
                 print(CustomException(e, sys))
+
+@app.post("/stop-server")
+def stop_server():
+    close_browser()
         
     
 # Function to call an external API
