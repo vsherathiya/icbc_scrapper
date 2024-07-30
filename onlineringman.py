@@ -19,19 +19,19 @@ app = FastAPI()
 
 
 # Database configuration
-db_config = {'host': 'localhost',
-             'user': 'root',
-             'password': '',
-             'database': 'scrap_data',
-             'port': 3307
-             }
-# db_config = {
-#    'host': 'localhost',
-#    'user': 'icbc_scrapper',
-#    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',
-#    'database': 'icbc_scrapper_DB',
-#    'port': 3306
-# }
+# db_config = {'host': 'localhost',
+#              'user': 'root',
+#              'password': '',
+#              'database': 'scrap_data',
+#              'port': 3307
+#              }
+db_config = {
+   'host': 'localhost',
+   'user': 'icbc_scrapper',
+   'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',
+   'database': 'icbc_scrapper_DB',
+   'port': 3306
+}
 
 
 def convert_date_format(date_str):
@@ -411,7 +411,7 @@ def stop_server():
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "http://localhost:8080/add_car_info"
+        url = "https://americanauctionaccess.com/edge-scrap-api"
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
             return response.json()
