@@ -347,7 +347,7 @@ def call(driver,id,password,links):
                     parsed_data.append(formatted_data)
                     insert_data(formatted_data)
                     call_api(json.dumps(formatted_data))
-                    del formatted_data['hid_allimages']
+                    # del formatted_data['hid_allimages']
                     print(f"\n\n {json.dumps(formatted_data)}\n")
                     logger.info(f"\n\n {json.dumps(formatted_data)}\n")
                     yield(f"\n\n {json.dumps(formatted_data)}\n")
