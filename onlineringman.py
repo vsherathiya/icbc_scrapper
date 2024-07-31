@@ -520,8 +520,8 @@ def call(driver, id, password, links):
 
     finally:
         driver.quit()
-        logger.info("Process completed")
-        yield "Process completed"
+        logger.info("\n\nProcess completed")
+        yield "\n\nProcess completed"
 
 
 @app.post("/parse_links/")
