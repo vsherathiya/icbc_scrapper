@@ -268,7 +268,7 @@ def to_sentence_case(text):
     sentence_case_text = words[0] + ' ' + ' '.join(word.lower() for word in words[1:])
     return sentence_case_text
 
-def call(driver, id, password, links):
+def call(driver, id, password, links,state,auction_date,city):
     try:
         parsed_data = []
         driver.get("https://onlineringman.com/")
@@ -477,9 +477,9 @@ def call(driver, id, password, links):
                         "currency": "USD",
                         "price": "1",
                         "country": "1",
-                        "state": "",
-                        "city": "",
-                        "auction_date": "",
+                        "state": state,
+                        "city": city,
+                        "auction_date": auction_date,
                         "purchase_option": "0",
                         "hid_main_images": "",
                         "hid_addedtype": "2",
@@ -535,7 +535,7 @@ async def parse_links(request_body: RequestBody):
         driver = webdriver.Chrome(options=chrome_options)
 
         return StreamingResponse(
-            call(driver, request_body.id, request_body.password, request_body.links),
+            call(driver, request_body.id, request_body.password, request_body.links,request_body.state,request_body.auction_date,request_body.city),
             media_type="text/plain",
         )
     except Exception as e:
