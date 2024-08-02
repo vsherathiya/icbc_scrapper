@@ -6,7 +6,8 @@ __pycache__/
 logos.*
 logos/
 .idea/*
-
+online/*
+auto_auctions.*
 # C extensions
 *.so
 data/*

@@ -144,6 +144,9 @@ class RequestBody(BaseModel):
     id: str = "hello@americanauctionaccess.com"
     password: str = "Marhaba@450"
     links: List[str]
+    state:str = "state"
+    city:str = "city"
+    auction_date : str = 'yyyy-mm-dd'
 
 def download_image_as_base64(image_url):
     try:
