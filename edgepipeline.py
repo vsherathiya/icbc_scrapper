@@ -183,6 +183,13 @@ def get_image_sources(driver, name):
     sources_bs64 = []
     sources = []
     try:
+        element = WebDriverWait(driver, 20).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "fotorama__img"))
+        )
+        for ele in element:
+            img_url = ele.get_attribute('src').replace('AweDc1Ow', 'YwMHgxMjAwOw')
+            sources.append(img_url)
+            sources_bs64.append(download_image_as_base64(img_url))
         elements = WebDriverWait(driver, 20).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.fotorama__thumb.fotorama__loaded.fotorama__loaded--img > img"))
         )
