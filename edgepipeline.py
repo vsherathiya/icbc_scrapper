@@ -120,8 +120,20 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
-chrome_options.binary_location = "/usr/bin/chromium-browser"  # Adjust this path if necessary
-logger.info(f"{str(db_config)}'\n'{chrome_options.binary_location}")
+# Overcome limited resource problems
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+)
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+chrome_options.add_experimental_option("useAutomationExtension", False)
+chrome_options.add_argument("--window-size=1920x1080")
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_argument("--proxy-server='direct://'")
+chrome_options.add_argument("--proxy-bypass-list=*")
+chrome_options.binary_location = "/usr/bin/chromium-browser"
+logger.info(f"{str(db_config)}\n{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
 def get_element_text(driver, selector, name):
