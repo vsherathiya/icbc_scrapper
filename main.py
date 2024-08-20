@@ -345,7 +345,7 @@ def download_image_as_base64(image_url, cookies):
         image_content = response.content
 
         return base64.b64encode(image_content).decode('utf-8'), image_url
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(f"Error downloading image: {e}")
         logger.error(f"Error downloading image: {CustomException(e, sys)}")
         return '', image_url
@@ -618,8 +618,8 @@ def login_endpoint(login_details: LoginDetails):
     except Exception as e:
         logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-        raise HTTPException(
-            status_code=500, detail="An error occurred during scraping.")
+        # raise HTTPException(
+        #     status_code=500, detail="An error occurred during scraping.")
     finally:
         close_browser()
 
