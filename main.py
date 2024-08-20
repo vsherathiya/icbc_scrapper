@@ -400,8 +400,7 @@ def extract_structured_data(details):
     except Exception as e:
         logger.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-
-    return {
+    d = {
         "cars_type": cars_type,
         "category": category,
         "make": make,
@@ -436,12 +435,16 @@ def extract_structured_data(details):
         "h_inventory": h_inventory,
         "hid_allimages": hid_allimages,
     }
+    a= d
+    del a['hid_allimages']
+    print(a)
+    return d
 
 
 def call_api(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
-        url = "https://americanauctionaccess.com/icbc-scrap-api"
+        url = "http://localhost:8080/add_car_info"
         response = requests.post(url, headers=headers, data=data)
         print(response.status_code)
         if response.status_code == 200:
@@ -523,7 +526,7 @@ def scrape_page(page_num, cookies):
         if len(data['hid_allimages'])>0:
             status_code = call_api(json_data)
             # logger.info(json_data)
-            insert_data_to_database(page_data, images, str(status_code))
+            # insert_data_to_database(page_data, images, str(status_code))
             print(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
             logger.info(f"VIN NUMBER {data['vin']} - stock Number {data['stock_number']} data appended to database.")
             print(status_code)
