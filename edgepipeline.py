@@ -156,7 +156,7 @@ def extract_data_from_url(driver, url):
         driver.get(url)
         sleep(1.5)
 
-        data['heading'] = get_element_text(driver, "h1.description", "heading")
+        data['heading'] = get_element_text(driver, "div[class='overview'] h1[class='description']","heading")
         data['run'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.run-number > span", "run")
         data['vin'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.vin > span", "vin")
         data['pmr'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.pmr > div > div > span", "pmr")
@@ -364,7 +364,7 @@ def call(driver,id,password,links):
                         json.dump(formatted_data, json_file, indent=4)
 
                     parsed_data.append(formatted_data)
-                    # insert_data(formatted_data)
+                    insert_data(formatted_data)
                     call_api(json.dumps(formatted_data))
                     # del formatted_data['hid_allimages']
                     print(f"\n\n {json.dumps(formatted_data)}\n")
