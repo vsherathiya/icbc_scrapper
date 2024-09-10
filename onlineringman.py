@@ -451,7 +451,7 @@ def call(driver, id, password, links,state,auction_date,city):
 
                 try:
                     formatted_data = {
-                        "cars_type": "11",
+                        "cars_type": "12",
                         "category": "car",
                         "make": heading.split(" ")[1],
                         "model": " ".join(heading.split(" ")[2:4]),
