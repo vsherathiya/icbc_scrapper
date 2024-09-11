@@ -22,20 +22,20 @@ app = FastAPI()
 
 
 # Database configuration
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "",
-    "database": "scrap_data",
-    "port": 3307,
-}
 # db_config = {
-#    'host': 'localhost',
-#    'user': 'icbc_scrapper',
-#    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',
-#    'database': 'icbc_scrapper_DB',
-#    'port': 3306
+#     "host": "localhost",
+#     "user": "root",
+#     "password": "",
+#     "database": "scrap_data",
+#     "port": 3307,
 # }
+db_config = {
+   'host': 'localhost',
+   'user': 'icbc_scrapper',
+   'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',
+   'database': 'icbc_scrapper_DB',
+   'port': 3306
+}
 
 
 def convert_date_format(date_str):
@@ -136,7 +136,7 @@ chrome_options.add_argument("--window-size=1920x1080")
 chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--proxy-server='direct://'")
 chrome_options.add_argument("--proxy-bypass-list=*")
-# chrome_options.binary_location = "/usr/bin/chromium-browser"
+chrome_options.binary_location = "/usr/bin/chromium-browser"
 logger.info(f"{str(db_config)}\n{chrome_options.binary_location}")
 
 
