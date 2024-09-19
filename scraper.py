@@ -236,13 +236,13 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
         time.sleep(1.5)
 
         # Extract images and data as before
-        images_bs64, image_sources = get_image_sources(driver)
-        print(image_sources)
-        logger.info(f"Fetched {len(image_sources)} images from {url}")
 
         data = extract_data_by_xpath(driver, xpaths)
         logger.info(f"Extracted data from {url}: {data}")
 
+        images_bs64, image_sources = get_image_sources(driver)
+        print(image_sources)
+        logger.info(f"Fetched {len(image_sources)} images from {url}")
         result = {
             'url': url,
             'images': image_sources,
@@ -252,7 +252,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
         # Safely extract each piece of data using try-except blocks
         d = {}
         try:
-            d["cars_type"] = "12"
+            d["cars_type"] = "11    "
         except Exception as e:
             logger.error(f"Error setting cars_type: {e}")
             d["cars_type"] = 'none'
@@ -311,7 +311,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             logger.error(f"Error setting transmission: {e}")
             d["transmission"] = 'none'
         try:
-            d["cylinders"] = result['data']['cylinder'].replace('cyl',"")
+            d["cylinders"] = result['data']['cylinder'].lower().replace('cyl',"")
         except Exception as e:
             logger.error(f"Error setting cylinders: {e}")
             d["cylinders"] = 'none'
@@ -330,13 +330,13 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             d["drive"] = 'none'
 
         try:
-            d["kilometer"] = result['data']['kilometer'].replace("•","").replace("mi","")
+            d["kilometer"] = "".join(filter(str.isdigit, result['data']['kilometer'].replace("•","").replace("mi","")))
         except Exception as e:
             logger.error(f"Error setting kilometer: {e}")
             d["kilometer"] = 'none'
 
         try:
-            d["keys"] = result['data']['otherkey'] + result['data']['smartkey']
+            d["keys"] = str(int(result['data']['otherkey']) + int(result['data']['smartkey']))
         except Exception as e:
             logger.error(f"Error setting keys: {e}")
             d["keys"] = 'none'
@@ -391,8 +391,8 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
         d["drivable"] = ""
         d["engine_runs"] = ""
         d["pmr"] = ""
-        d["hid_allimages"] = result['images']
-        d["auction_name"] = result['data'].get('ext_color', 'none')  # Adding a default value if key is missing
+        d["hid_allimages"] = image_sources
+        d["auction_name"] = result['data'].get('location', 'none')  # Adding a default value if key is missing
 
         
         file_name = f"{d.get('vin','  ')}.json"
@@ -406,7 +406,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             
             
         print("\n================================",d,"================================\n")
-        # call_api(json.dumps(d))
+        call_api(json.dumps(d)) 
 
         scraped_data.append(d)
 
