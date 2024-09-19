@@ -372,7 +372,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             d["title_status"] = 'none'
 
         try:
-            d["run_no"] = 'run_no'
+            d["run_no"] = result['data']['run_no']
         except Exception as e:
             logger.error(f"Error setting run_no: {e}")
             d["run_no"] = 'none'
@@ -442,7 +442,8 @@ xpaths = {
     'title_status'         :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[14]/div[2]',
     'mmr'                  :'//*[@id="bidWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a',
     'location'             : '//*[@id="bidWidget"]/div[2]/div[1]/span/span[10]/span',
-    'date'                 : '//*[@id="bidWidget"]/div[2]/div[1]/span/span[8]'
+    'date'                 : '//*[@id="bidWidget"]/div[2]/div[1]/span/span[8]',
+    'run_no'               :  '//*[@id="simWidget"]/div[2]/div[1]/span/span[10]'
 }
 
 # Streamlit application code
