@@ -109,7 +109,7 @@ def login(driver, id, password):
         except Exception as e:
             logger.warning(f"Continue button not found or not clickable: {CustomException(e, sys)}")
 
-        time.sleep(1.5)
+        time.sleep(1)
         return True, driver
     
     except Exception as e:
@@ -239,7 +239,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
         # Add a page refresh
         driver.refresh()
         driver.refresh()
-        time.sleep(1.5)
+        time.sleep(2.5)
 
         # Extract images and data as before
 
