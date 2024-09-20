@@ -16,7 +16,7 @@ logger = setup_logger("manheim", "manheim",stream=True)
 # Initialize the WebDriver
 def init_driver():
     chrome_options = Options()
-    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     # Overcome limited resource problems
