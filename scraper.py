@@ -11,7 +11,7 @@ from exception import CustomException, setup_logger
 import sys
 
 # Setup logger
-logger = setup_logger("manheim", "manheim")
+logger = setup_logger("manheim", "manheim",stream=True)
 
 # Initialize the WebDriver
 def init_driver():
@@ -109,7 +109,7 @@ def login(driver, id, password):
         except Exception as e:
             logger.warning(f"Continue button not found or not clickable: {CustomException(e, sys)}")
 
-        time.sleep(1)
+        time.sleep(1.5)
         return True, driver
     
     except Exception as e:
@@ -138,7 +138,6 @@ def extract_data_by_xpath(driver, xpath_dict):
     data = {}
     
     for key, xpath in xpath_dict.items():
-        print(data)
         try:
             element = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, xpath))
@@ -147,6 +146,7 @@ def extract_data_by_xpath(driver, xpath_dict):
         except Exception as e:
             logger.error(f"Error extracting data for {key}: {CustomException(e, sys)}")
             data[key] = None
+    print(data)
     return data
 
 # Function to scrape data and append it to a JSON file
@@ -412,6 +412,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             
             
         print("\n================================",d,"================================\n")
+        logger.info(f"\n================================{d}================================\n")
         call_api(json.dumps(d)) 
 
         scraped_data.append(d)
