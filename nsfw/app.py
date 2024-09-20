@@ -109,9 +109,10 @@ def check_audio(url):
 
 # Streamlit UI
 st.title("Video & Audio Safety Checker")
+st.header("Please Enter CDN url with mp4 extension", divider="gray")
 
 
-video_url = st.text_input("Enter the video URL cdn url with mp4:")
+video_url = st.text_input("Enter the video URL:")
 
 if st.button("Check"):
     if video_url:
