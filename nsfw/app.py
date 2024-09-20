@@ -111,7 +111,7 @@ def check_audio(url):
 st.title("Video & Audio Safety Checker")
 
 
-video_url = st.text_input("Enter the video URL:")
+video_url = st.text_input("Enter the video URL cdn url with mp4:")
 
 if st.button("Check"):
     if video_url:
