@@ -16,7 +16,7 @@ logger = setup_logger("manheim", "manheim",stream=True)
 # Initialize the WebDriver
 def init_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     # Overcome limited resource problems
@@ -31,7 +31,7 @@ def init_driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--proxy-server='direct://'")
     chrome_options.add_argument("--proxy-bypass-list=*")
-    # chrome_options.binary_location = "/usr/bin/chromium-browser"
+    chrome_options.binary_location = "/usr/bin/chromium-browser"
 
     
     return webdriver.Chrome(options=chrome_options)
@@ -52,7 +52,7 @@ def get_image_sources(driver):
     sources_bs64 = []
     sources = []
     try:
-        target_div = WebDriverWait(driver, 20).until(
+        target_div = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//*[@id="fyusion-prism-viewer"]/div/div[2]/div/div'))
         )
         images = target_div.find_elements(By.TAG_NAME, "img")
@@ -139,7 +139,7 @@ def extract_data_by_xpath(driver, xpath_dict):
     
     for key, xpath in xpath_dict.items():
         try:
-            element = WebDriverWait(driver, 20).until(
+            element = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, xpath))
             )
             data[key] = element.text
@@ -239,7 +239,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
         # Add a page refresh
         driver.refresh()
         driver.refresh()
-        time.sleep(2.5)
+        time.sleep(3)
 
         # Extract images and data as before
 
