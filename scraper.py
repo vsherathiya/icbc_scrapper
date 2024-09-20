@@ -31,7 +31,7 @@ def init_driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--proxy-server='direct://'")
     chrome_options.add_argument("--proxy-bypass-list=*")
-    chrome_options.binary_location = "/usr/bin/chromium-browser"
+    # chrome_options.binary_location = "/usr/bin/chromium-browser"
 
     
     return webdriver.Chrome(options=chrome_options)
@@ -396,9 +396,10 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
         d["h_inventory"] = "addinventory"
         d["drivable"] = ""
         d["engine_runs"] = ""
-        d["pmr"] = ""
+        d["pmr"] =  ''.join(filter(str.isdigit,result['data'].get('mmr','0')))
         d["hid_allimages"] = image_sources
         d["auction_name"] = result['data'].get('location', 'none')  # Adding a default value if key is missing
+        d['mileage_type'] = "MILE"
 
         
         file_name = f"{d.get('vin','  ')}.json"
@@ -437,7 +438,6 @@ xpaths = {
     'engine'               :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[4]/span[2]',
     "cylinder"             : '//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[4]/span[3]',
     'year_make_model_type' :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[1]/div[1]/span',
-                             
     'fuel'                 :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[4]/span[5]',
     'transmission'         :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[4]/span[7]',
     'kilometer'            :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[2]',
@@ -447,9 +447,9 @@ xpaths = {
     'int_color'            :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]',
     'ext_color'            :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]',
     'title_status'         :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[14]/div[2]',
-    'mmr'                  :'//*[@id="bidWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a',
-    'location'             : '//*[@id="bidWidget"]/div[2]/div[1]/span/span[10]/span',
-    'date'                 : '//*[@id="bidWidget"]/div[2]/div[1]/span/span[8]',
+    'mmr'                  :'//*[@id="simWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a',
+    'location'             : '//*[@id="simWidget"]/div[2]/div[1]/span/span[12]/span',
+    'date'                 : '//*[@id="simWidget"]/div[2]/div[1]/span/span[8]',
     'run_no'               :  '//*[@id="simWidget"]/div[2]/div[1]/span/span[10]'
 }
 
