@@ -156,7 +156,21 @@ def extract_data_from_url(driver, url):
         driver.get(url)
         sleep(1.5)
 
-        data['heading'] = get_element_text(driver, "div[class='overview'] h1[class='description']","heading")
+#vdp > div.overview > h1
+        try:
+        
+            data['heading'] = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, "//*[@id='vdp']/div[2]/h1"))
+            ).text
+            
+        except Exception as e:
+            logger.error(f"Error Occurred at {CustomException(e, sys)}")
+            print(CustomException(e, sys))
+            logger.error(f"Error extracting {name}: {e}")
+            data['heading'] = " "
+        
+        
+        get_element_text(driver, "#vdp > div.overview > h1","heading")
         data['run'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.run-number > span", "run")
         data['vin'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.vin > span", "vin")
         data['pmr'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.pmr > div > div > span", "pmr")
@@ -285,13 +299,32 @@ def format_data(data):
         details = data.get('details', {})
         auction = data.get('auction', {})
         declarations = data.get('declarations', {})
+        
+        try :
+            make = data.get('heading'," ").split()[1]
+        except : 
+            make  = " "
+        
+        try:
+            model = data.get('heading'," ").split()[2]
+        except:
+            model =" "
+        try:
+            year = data.get('heading'," ").split()[0]
+        except:
+            year = " "
+        try:
+            type = data.get('heading'," ").split()[6]
+        except:
+            type = " "
+        
         formatted_data = {
         "cars_type": "10",
         "category": "car",
-        "make": data.get('heading').split()[1],
-        "model": data.get('heading').split()[2],
-        "year": data.get('heading').split()[0],
-        "type": data.get('heading').split()[6],
+        "make": make,
+        "model": model,
+        "year": year ,
+        "type": type ,
         "status": "724",
         "vin": data.get('vin', ''),
         "fuel_type": details.get('Fuel Type', ''),
