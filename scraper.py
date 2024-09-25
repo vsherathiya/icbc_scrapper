@@ -56,7 +56,7 @@ def get_image_sources(driver):
             EC.presence_of_element_located((By.XPATH, '//*[@id="fyusion-prism-viewer"]/div/div[2]/div/div'))
         )
         images = target_div.find_elements(By.TAG_NAME, "img")
-        print(images)
+        # print(images)
         for image in images:
             img_url = image.get_attribute("src")
             if img_url:
@@ -146,44 +146,9 @@ def extract_data_by_xpath(driver, xpath_dict):
         except Exception as e:
             logger.error(f"Error extracting data for {key}: {CustomException(e, sys)}")
             data[key] = None
-    print(data)
+    # print(data)
     return data
 
-# Function to scrape data and append it to a JSON file
-# def scrape_links(driver, urls, json_file='scraped_data.json'):
-#     scraped_data = []
-#     print("\n\ncalled function")
-    
-#     for url in urls:
-#         driver.get(url)
-#         time.sleep(2)
-#         # driver.refresh()
-#         images_bs64, image_sources = get_image_sources(driver)
-#         logger.info(f"Fetched {len(image_sources)} images from {url}")
-
-#         data = extract_data_by_xpath(driver, xpaths)
-#         logger.info(f"Extracted data from {url}: {data}")
-
-#         result = {
-#             'url': url,
-#             'images': image_sources,
-#             'data': data
-#         }
-#         scraped_data.append(result)
-
-#     # Load existing data
-#     try:
-#         with open(json_file, 'r') as file:
-#             existing_data = json.load(file)
-#     except FileNotFoundError:
-#         existing_data = []
-
-#     # Append new data and save
-#     existing_data.extend(scraped_data)
-#     with open(json_file, 'w') as file:
-#         json.dump(existing_data, file, indent=4)
-
-#     return scraped_data
 
 from datetime import datetime
 
@@ -230,206 +195,328 @@ def call_api(data):
         print(f"Error sending data to API: {CustomException(e, sys)}")
 
 def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
-    scraped_data = []
-    print("\n\ncalled function")
+    try:
+        scraped_data = []
+        print("\n\ncalled function")
 
-    for url in urls:
-        driver.get(url)
-        # time.sleep(1)
-        # Add a page refresh
-        driver.refresh()
-        driver.refresh()
-        time.sleep(3)
+        for url in urls:
+            driver.get(url)
+            # time.sleep(1)
+            # Add a page refresh
+            driver.refresh()
+            driver.refresh()
+            time.sleep(3)
 
-        # Extract images and data as before
+            # Extract images and data as before
 
-        data = extract_data_by_xpath(driver, xpaths)
-        logger.info(f"Extracted data from {url}: {data}")
+            data = extract_data_by_xpath(driver, xpaths)
+            logger.info(f"Extracted data from {url}: {data}")
 
-        images_bs64, image_sources = get_image_sources(driver)
-        print(image_sources)
-        logger.info(f"Fetched {len(image_sources)} images from {url}")
-        result = {
-            'url': url,
-            'images': image_sources,
-            'data': data
-        }
+            images_bs64, image_sources = get_image_sources(driver)
+            print(image_sources)
+            logger.info(f"Fetched {len(image_sources)} images from {url}")
+            result = {
+                'url': url,
+                'images': image_sources,
+                'data': data
+            }
 
-        # Safely extract each piece of data using try-except blocks
-        d = {}
-        try:
-            d["cars_type"] = "11    "
-        except Exception as e:
-            logger.error(f"Error setting cars_type: {e}")
-            d["cars_type"] = 'none'
+            # Safely extract each piece of data using try-except blocks
+            d = {}
+            try:
+                d["cars_type"] = "11"
+            except Exception as e:
+                logger.error(f"Error setting cars_type: {e}")
+                d["cars_type"] = 'none'
 
-        try:
-            d["category"] = "car"
-        except Exception as e:
-            logger.error(f"Error setting category: {e}")
-            d["category"] = 'none'
+            try:
+                d["category"] = "car"
+            except Exception as e:
+                logger.error(f"Error setting category: {e}")
+                d["category"] = 'none'
 
-        try:
-            d["make"] = result['data']['year_make_model_type'].split(" ")[1]
-        except Exception as e:
-            logger.error(f"Error setting make: {e}")
-            d["make"] = 'none'
+            try:
+                d["make"] = result['data']['year_make_model_type'].split(" ")[1]
+            except Exception as e:
+                logger.error(f"Error setting make: {e}")
+                d["make"] = 'none'
 
-        try:
-            d["model"] = result['data']['year_make_model_type'].split(" ")[2]
-        except Exception as e:
-            logger.error(f"Error setting model: {e}")
-            d["model"] = 'none'
+            try:
+                d["model"] = result['data']['year_make_model_type'].split(" ")[2]
+            except Exception as e:
+                logger.error(f"Error setting model: {e}")
+                d["model"] = 'none'
 
-        try:
-            d["year"] = result['data']['year_make_model_type'].split(" ")[0]
-        except Exception as e:
-            logger.error(f"Error setting year: {e}")
-            d["year"] = 'none'
+            try:
+                d["year"] = result['data']['year_make_model_type'].split(" ")[0]
+            except Exception as e:
+                logger.error(f"Error setting year: {e}")
+                d["year"] = 'none'
 
-        try:
-            d["type"] = result['data']['year_make_model_type'].split(" ")[3]
-        except Exception as e:
-            logger.error(f"Error setting type: {e}")
-            d["type"] = 'none'
+            try:
+                d["type"] = result['data']['year_make_model_type'].split(" ")[3]
+            except Exception as e:
+                logger.error(f"Error setting type: {e}")
+                d["type"] = 'none'
 
-        try:
-            d["status"] = "724"
-        except Exception as e:
-            logger.error(f"Error setting status: {e}")
-            d["status"] = 'none'
+            try:
+                d["status"] = "724"
+            except Exception as e:
+                logger.error(f"Error setting status: {e}")
+                d["status"] = 'none'
 
-        try:
-            d["vin"] = result['data']['vin']
-        except Exception as e:
-            logger.error(f"Error setting vin: {e}")
-            d["vin"] = 'none'
+            try:
+                d["vin"] = result['data']['vin']
+            except Exception as e:
+                logger.error(f"Error setting vin: {e}")
+                d["vin"] = 'none'
 
-        try:
-            d["fuel_type"] = result['data']['fuel']
-        except Exception as e:
-            logger.error(f"Error setting fuel_type: {e}")
-            d["fuel_type"] = 'none'
+            try:
+                d["fuel_type"] = result['data']['fuel']
+            except Exception as e:
+                logger.error(f"Error setting fuel_type: {e}")
+                d["fuel_type"] = 'none'
 
-        try:
-            d["transmission"] = result['data']['transmission']
-        except Exception as e:
-            logger.error(f"Error setting transmission: {e}")
-            d["transmission"] = 'none'
-        try:
-            d["cylinders"] = result['data']['cylinder'].lower().replace('cyl',"")
-        except Exception as e:
-            logger.error(f"Error setting cylinders: {e}")
-            d["cylinders"] = 'none'
+            try:
+                d["transmission"] = result['data']['transmission']
+            except Exception as e:
+                logger.error(f"Error setting transmission: {e}")
+                d["transmission"] = 'none'
+            try:
+                d["cylinders"] = result['data']['cylinder'].lower().replace('cyl',"")
+            except Exception as e:
+                logger.error(f"Error setting cylinders: {e}")
+                d["cylinders"] = 'none'
 
-        try:
-            d["engine"] = result['data']['engine'] + " "+d['cylinders']+"cyl"
-        except Exception as e:
-            logger.error(f"Error setting engine: {e}")
-            d["engine"] = 'none'
+            try:
+                d["engine"] = result['data']['engine'] + " "+d['cylinders']+"cyl"
+            except Exception as e:
+                logger.error(f"Error setting engine: {e}")
+                d["engine"] = 'none'
 
 
-        try:
-            d["drive"] = result['data']['drive'].replace("•","")
-        except Exception as e:
-            logger.error(f"Error setting drive: {e}")
-            d["drive"] = 'none'
+            try:
+                d["drive"] = result['data']['drive'].replace("•","")
+            except Exception as e:
+                logger.error(f"Error setting drive: {e}")
+                d["drive"] = 'none'
 
-        try:
-            d["kilometer"] = "".join(filter(str.isdigit, result['data']['kilometer'].replace("•","").replace("mi","")))
-        except Exception as e:
-            logger.error(f"Error setting kilometer: {e}")
-            d["kilometer"] = 'none'
+            try:
+                d["kilometer"] = "".join(filter(str.isdigit, result['data']['kilometer'].replace("•","").replace("mi","")))
+            except Exception as e:
+                logger.error(f"Error setting kilometer: {e}")
+                d["kilometer"] = 'none'
 
-        try:
-            d["keys"] = str(int(result['data']['otherkey']) + int(result['data']['smartkey']))
-        except Exception as e:
-            logger.error(f"Error setting keys: {e}")
-            d["keys"] = 'none'
+            try:
+                d["keys"] = str(int(result['data']['otherkey']) + int(result['data']['smartkey']))
+            except Exception as e:
+                logger.error(f"Error setting keys: {e}")
+                d["keys"] = 'none'
 
-        try:
-            d["stock_number"] = 'stock_number'
-        except Exception as e:
-            logger.error(f"Error setting stock_number: {e}")
-            d["stock_number"] = 'none'
+            try:
+                d["stock_number"] = 'stock_number'
+            except Exception as e:
+                logger.error(f"Error setting stock_number: {e}")
+                d["stock_number"] = 'none'
+                
+            try:
+                element = driver.find_element(By.XPATH, '//*[@id="simdWidget"]/div[2]/div[1]/span/span[8]').text
+                d["auction_date"] = convert_to_yyyy_mm_dd(element)
+            except Exception as e:
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="bidWidget"]/div[2]/div[1]/span/span[8]').text
+                    d["auction_date"] = convert_to_yyyy_mm_dd(element)
+                except Exception as e:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="simWidget"]/div[2]/div[1]/span/span[8]'))
+                        ).text
+                        d["auction_date"] = convert_to_yyyy_mm_dd(element)
+                    except Exception as e:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located((By.XPATH, '//*[@id="bidWidget"]/div[2]/div[1]/span/span[8]'))
+                            ).text
+                            d["auction_date"] = convert_to_yyyy_mm_dd(element)
+                        except Exception as e:
+                            logger.error(f"Error extracting data: {e}")
+                            d["auction_date"] = "None"
 
-        try:
-            d["interior_colour"] = result['data']['int_color']
-        except Exception as e:
-            logger.error(f"Error setting interior_colour: {e}")
-            d["interior_colour"] = 'none'
 
-        try:
-            d["exterior_colour"] = result['data']['ext_color']
-        except Exception as e:
-            logger.error(f"Error setting exterior_colour: {e}")
-            d["exterior_colour"] = 'none'
+            # Additional keys
+            d["currency"] = "USD"
+            d["price"] = "1"
+            d["country"] = "1"
+            d["state"] = state
+            d["city"] = city
+            d["purchase_option"] = "0"
+            d["hid_main_images"] = ""
+            d["hid_addedtype"] = "2"
+            d["hid_addedby"] = "47"
+            d["h_inventory"] = "addinventory"
+            d["drivable"] = ""
+            d["engine_runs"] = ""
+            try:
+                element = driver.find_element(By.XPATH, '//*[@id="bidWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a').text
+                d["pmr"]  = ''.join(filter(str.isdigit,element))
+            except Exception as e:
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="simWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a').text
+                    d["pmr"]  = ''.join(filter(str.isdigit,element))
+                except Exception as e:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="simWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a'))
+                        ).text
+                        d["pmr"]  = ''.join(filter(str.isdigit,element))
+                    except Exception as e:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located((By.XPATH, '//*[@id="bidWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a'))
+                            ).text
+                            d["pmr"]  = ''.join(filter(str.isdigit,element))
+                        except Exception as e:
+                            logger.error(f"Error extracting data: {e}")
+            try:
+                element = driver.find_element(By.XPATH, '//*[@id="bidWidget"]/div[2]/div[1]/span/span[10]/span').text
+                d["auction_name"] = element
+            except Exception as e:
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="simdWidget"]/div[2]/div[1]/span/span[10]/span').text
+                    d["auction_name"] = element
+                except Exception as e:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="bidWidget"]/div[2]/div[1]/span/span[10]/span'))
+                        ).text
+                        d["auction_name"] = element
+                    except Exception as e:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located((By.XPATH,'//*[@id="simdWidget"]/div[2]/div[1]/span/span[10]/span'))
+                            ).text
+                            d["auction_name"] = element
+                        except Exception as e:
+                            logger.error(f"Error extracting data: {e}")
+                            d["auction_name"] = "None"
+            try:
+                element = driver.find_element(By.XPATH, '//*[@id="simWidget"]/div[2]/div[1]/span/span[10]').text
+                d["run_no"] = element
+            # except Exception as e:
+                # try:
+                #     element = driver.find_element(By.XPATH, '//*[@id="simWidget"]/div[2]/div[1]/span/span[10]').text
+                #     d["run_no"] = element
+                # # except Exception as e:
+                #     try:
+                #         element = WebDriverWait(driver, 10).until(
+                #             EC.presence_of_element_located((By.XPATH, '//*[@id="simWidget"]/div[2]/div[1]/span/span[10]'))
+                #         ).text
+                #         d["run_no"] = element
+                #     except Exception as e:
+                #         try:
+                #             element = WebDriverWait(driver, 10).until(
+                #                 EC.presence_of_element_located((By.XPATH,'//*[@id="bidWidget"]/div[2]/div[1]/span/span[10]'))
+                #             ).text
+                #             d["run_no"] = element
+            except Exception as e:
+                logger.error(f"Error extracting data: {e}")
+                d["run_no"] = "None"
+            try:
+                element = driver.find_element(By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[14]/div[2]').text
+                d["title_status"] = element
+            except Exception as e:
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[2]/div[1]/div[14]/div[2]').text
+                    d["title_status"] = element
+                except Exception as e:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[14]/div[2]'))
+                        ).text
+                        d["title_status"] = element
+                    except Exception as e:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located((By.XPATH,'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[2]/div[1]/div[14]/div[2]'))
+                            ).text
+                            d["title_status"] = element
+                        except Exception as e:
+                            logger.error(f"Error extracting data: {e}")
+                            d["title_status"] = "None"
+                            
+                            
+            try:                                         
+                element = driver.find_element(By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]').text
+                d["exterior_colour"] = element
+            except Exception as e:
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]').text
+                    d["exterior_colour"] = element
+                except Exception as e:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]'))
+                        ).text
+                        d["exterior_colour"] = element
+                    except Exception as e:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located((By.XPATH,'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[2]/div[1]/div[1]/div[2]'))
+                            ).text
+                            d["exterior_colour"] = element
+                        except Exception as e:
+                            logger.error(f"Error extracting data: {e}")
+                            d["exterior_colour"] = "None"
+            try:
+                element = driver.find_element(By.XPATH, '///*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]').text
+                d["interior_colour"] = element
+            except Exception as e:
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[2]/div[1]/div[2]/div[2]').text
+                    d["interior_colour"] = element
+                except Exception as e:
+                    try:
+                        element = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]'))
+                        ).text
+                        d["interior_colour"] = element
+                    except Exception as e:
+                        try:
+                            element = WebDriverWait(driver, 10).until(
+                                EC.presence_of_element_located((By.XPATH,'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[2]/div[1]/div[2]/div[2]'))
+                            ).text
+                            d["interior_colour"] = element
+                        except Exception as e:
+                            logger.error(f"Error extracting data: {e}")
+                            d["interior_colour"] = "None"
+                            
+                            
+            d["hid_allimages"] = image_sources
+            d['mileage_type'] = "MILE"
 
-        try:
-            d["auction_date"] = convert_to_yyyy_mm_dd(result['data']['date'])
-        except Exception as e:
-            logger.error(f"Error setting auction_date: {e}")
-            d["auction_date"] = 'none'
-
-        try:
-            d["title_status"] = result['data']['title_status']
-        except Exception as e:
-            logger.error(f"Error setting title_status: {e}")
-            d["title_status"] = 'none'
-
-        try:
-            d["run_no"] = result['data']['run_no']
-        except Exception as e:
-            logger.error(f"Error setting run_no: {e}")
-            d["run_no"] = 'none'
-
-        # Additional keys
-        d["currency"] = "USD"
-        d["price"] = "1"
-        d["country"] = "1"
-        d["state"] = state
-        d["city"] = city
-        d["purchase_option"] = "0"
-        d["hid_main_images"] = ""
-        d["hid_addedtype"] = "2"
-        d["hid_addedby"] = "47"
-        d["h_inventory"] = "addinventory"
-        d["drivable"] = ""
-        d["engine_runs"] = ""
-        d["pmr"] =  ''.join(filter(str.isdigit,result['data'].get('mmr','0')))
-        d["hid_allimages"] = image_sources
-        d["auction_name"] = result['data'].get('location', 'none')  # Adding a default value if key is missing
-        d['mileage_type'] = "MILE"
-
-        
-        file_name = f"{d.get('vin','  ')}.json"
-        file_path = os.path.join("data/man", file_name)
-
-        if not os.path.exists("data/man"):
-            os.makedirs("data/man")
-
-        with open(file_path, "w") as json_file:
-            json.dump(d, json_file, indent=4)
             
-            
-        print("\n================================",d,"================================\n")
-        logger.info(f"\n================================{d}================================\n")
-        call_api(json.dumps(d)) 
+            file_name = f"{d.get('vin','  ')}.json"
+            file_path = os.path.join("data/man", file_name)
 
-        scraped_data.append(d)
+            if not os.path.exists("data/man"):
+                os.makedirs("data/man")
 
-    # Load existing data and save the new data to the JSON file
-    # try:
-    #     with open(json_file, 'r') as file:
-    #         existing_data = json.load(file)
-    # except FileNotFoundError:
-    #     existing_data = []
+            with open(file_path, "w") as json_file:
+                json.dump(d, json_file, indent=4)
+                
+                
+            print("\n================================",d,"================================\n")
+            logger.info(f"\n================================{d}================================\n")
+            call_api(json.dumps(d)) 
 
-    # existing_data.extend(scraped_data)
-    # with open(json_file, 'w') as file:
-    #     json.dump(existing_data, file, indent=4)
+            scraped_data.append(d)
 
-    return scraped_data
+        return scraped_data
+    except Exception as e:
+        logger.error(f"Error sending data to API: {CustomException(e, sys)}")
+        print(f"Error sending data to API: {CustomException(e, sys)}")
+
+    return {}
 
 
 # Define XPaths for data extraction
@@ -443,14 +530,7 @@ xpaths = {
     'kilometer'            :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[2]',
     'drive'                :'//*[@id="ae-main"]/div/div/div/div[3]/div[1]/div/div[2]/div[1]/span[3]',
     'smartkey'             :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[3]/div/div/div/div[2]/div[2]/div[1]/div[2]/div',
-    "otherkey"             :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[3]/div/div/div/div[2]/div[2]/div[2]/div[2]/div',
-    'int_color'            :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]',
-    'ext_color'            :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[1]/div[2]',
-    'title_status'         :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[14]/div[2]',
-    'mmr'                  :'//*[@id="simWidget"]/div[2]/div[1]/span/span[4]/span/span[1]/span[2]/a',
-    'location'             : '//*[@id="simWidget"]/div[2]/div[1]/span/span[12]/span',
-    'date'                 : '//*[@id="simWidget"]/div[2]/div[1]/span/span[8]',
-    'run_no'               :  '//*[@id="simWidget"]/div[2]/div[1]/span/span[10]'
+    "otherkey"             :'//*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[3]/div[2]/div[3]/div/div/div/div[2]/div[2]/div[2]/div[2]/div'
 }
 
 # Streamlit application code
