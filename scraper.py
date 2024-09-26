@@ -310,8 +310,12 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             try:
                 d["keys"] = str(int(result['data']['otherkey']) + int(result['data']['smartkey']))
             except Exception as e:
-                logger.error(f"Error setting keys: {e}")
-                d["keys"] = 'none'
+                try:
+                    element = driver.find_element(By.XPATH, '//*[@id="cr-hero-icons"]/div/div[6]/div/span/div/span[1]/span[2]').text
+                    d["keys"] = element
+                except Exception as e:
+                    logger.error(f"Error setting keys: {e}")
+                    d["keys"] = 'none'
 
             try:
                 d["stock_number"] = 'stock_number'
