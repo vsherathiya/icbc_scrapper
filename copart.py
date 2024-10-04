@@ -31,7 +31,7 @@ def init_driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--proxy-server='direct://'")
     chrome_options.add_argument("--proxy-bypass-list=*")
-    # chrome_options.binary_location = "/usr/bin/chromium-browser"
+    chrome_options.binary_location = "/usr/bin/chromium-browser"
 
     
     return webdriver.Chrome(options=chrome_options)
