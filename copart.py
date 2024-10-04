@@ -53,7 +53,7 @@ def get_image_sources(driver):
     sources = []
     try:
         target_div =driver.find_elements(By.CLASS_NAME, 'thumbImgblock')
-        print(target_div)
+        # print(target_div)
         # images = target_div.find_elements(By.TAG_NAME, "img")
         # print(images)
         for image in target_div:
@@ -166,7 +166,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             logger.info(f"Extracted data from {url}: {data}")
 
             images_bs64, image_sources = get_image_sources(driver)
-            print(image_sources)
+            # print(image_sources)
             logger.info(f"Fetched {len(image_sources)} images from {url}")
             result = {
                 'url': url,
@@ -297,7 +297,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             d["engine_runs"] = ""
             try:
                 element = driver.find_element(By.XPATH, '//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[10]/div/span').text
-                print(element)
+                # print(element)
                 d["pmr"]  =str(int(float(''.join(filter(lambda x: x.isdigit() or x == '.', element)))))
                 
                 
