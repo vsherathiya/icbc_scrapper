@@ -166,7 +166,7 @@ def extract_data_from_url(driver, url):
         except Exception as e:
             logger.error(f"Error Occurred at {CustomException(e, sys)}")
             print(CustomException(e, sys))
-            logger.error(f"Error extracting {name}: {e}")
+            logger.error(f"Error extracting heading: {e}")
             data['heading'] = " "
         
         
