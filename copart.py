@@ -83,15 +83,15 @@ def login(driver, id, password):
             logger.error(f"Error finding login fields: {CustomException(e, sys)}")
             return False, driver
         
-        # username_input.send_keys(id)
-        # password_input.send_keys(password)
+        username_input.send_keys(id)
+        password_input.send_keys(password)
 
-        # try:
-        #     submit_button = driver.find_element(By.XPATH, '//*[@id="show"]/div[4]/button')
-        #     submit_button.click()
-        # except Exception as e:
-        #     logger.error(f"Error clicking the submit button: {CustomException(e, sys)}")
-        #     return False, driver
+        try:
+            submit_button = driver.find_element(By.XPATH, '//*[@data-uname="loginSigninmemberbutton"]')
+            submit_button.click()
+        except Exception as e:
+            logger.error(f"Error clicking the submit button: {CustomException(e, sys)}")
+            return False, driver
 
 
         # time.sleep(1.5)
@@ -120,12 +120,12 @@ def extract_data_by_xpath(driver, xpath_dict):
 
 from datetime import datetime
 def convert_to_yyyy_mm_dd(date_str):
-    print("\n\n\n\n\n\n",date_str,"\n\n\n\n\n\n")
+    # print("\n\n\n\n\n\n",date_str,"\n\n\n\n\n\n")
     date_str = date_str.split("\n")[0].split(". ")[1]
-    print("\n\n\n\n",date_str,"\n\n\n\n")
+    # print("\n\n\n\n",date_str,"\n\n\n\n")
  
     try:
-        print(date_str)
+        # print(date_str)
         # Parse the datetime string according to the input format
         parsed_date = datetime.strptime(date_str, "%b %d, %Y")
 
@@ -231,7 +231,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 d["fuel_type"] = 'none'
 
             try:
-                d["transmission"] = result['data']['transmission']
+                d["transmission"] =  result['data']['transmission'].replace("Transmission:\n","" )
             except Exception as e:
                 logger.error(f"Error setting transmission: {e}")
                 d["transmission"] = 'none'
@@ -296,7 +296,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             d["drivable"] = ""
             d["engine_runs"] = ""
             try:
-                element = driver.find_element(By.XPATH, '//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[10]/div/span').text
+                element = driver.find_element(By.XPATH, '//*[@data-uname="lotdetailEstimatedretailvalue"]').text
                 # print(element)
                 d["pmr"]  =str(int(float(''.join(filter(lambda x: x.isdigit() or x == '.', element)))))
                 
@@ -345,12 +345,26 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 
                             
             try:                                         
-                element = driver.find_element(By.XPATH, '//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[16]/div/span').text
+                element = driver.find_element(By.XPATH, '//*[@data-uname="lotdetailColorvalue"]').text
                 d["exterior_colour"] = element
             except Exception as e:
     
                 logger.error(f"Error extracting data: {e}")
                 d["exterior_colour"] = "None"
+                
+                
+                
+            try:    
+                print("=============")                                     
+                element = driver.find_element(By.XPATH, '//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[36]/div/div/span/span').text
+                print(element)
+                d["highlight"] = element
+            except Exception as e:
+    
+                logger.error(f"Error extracting data: {e}")
+                d["highlight"] = "None"
+                
+                
             try:
                 # element = driver.find_element(By.XPATH, '///*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]').text
                 d["interior_colour"] = ""
@@ -377,6 +391,8 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             print("\n================================",d,"================================\n")
             logger.info(f"\n================================{d}================================\n")
             # call_api(json.dumps(d)) 
+            
+            
 
             scraped_data.append(d)
 
@@ -391,15 +407,15 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 # Define XPaths for data extraction
 xpaths = {
     'vin'                  :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[2]/div/div/div/span/span',
-    'lot' : '//*[@id="LotNumber"]',
-    'engine'               :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[17]/div/span',
-    "cylinder"             : '///*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[11]/div/span',
+    'lot'                  : '//*[@data-uname="lotdetailVinvalue"]',
+    'engine'               :'//*[@data-uname="lotdetailEnginetype"]',
+    "cylinder"             :'//*[@data-uname="lotdetailCylindervalue"]',
     'year_make_model_type' :'//*[@id="lot-details"]/div/div[1]/div/div/div/div/div/div/h1',
-    'fuel'                 :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[24]/div/span',
-    'transmission'         :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[18]/div/span',
-    'kilometer'            :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[5]/div/span/span/span',
-    'drive'                :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[19]/div/span',
-    'key'                  :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[25]/div/span'
+    'fuel'                 :'//*[@data-uname="lotdetailFuelvalue"]',
+    'transmission'         :'//*[@class="d-flex pt-5 border-top-gray"]',
+    'kilometer'            :'//*[@data-uname="lotdetailOdometervalue"]',
+    'drive'                :'//*[@data-uname="DriverValue"]',
+    'key'                  :'//*[@data-uname="lotdetailKeyvalue"]'
 }
 
 # Streamlit application code
@@ -424,7 +440,7 @@ if st.button("Login"):
         st.write("Attempting to log in...")
         try:
             driver = init_driver()
-            # login_successful, driver = login(driver, id, password)
+            login_successful, driver = login(driver, id, password)
             st.session_state['driver'] = driver
             login_successful = True
             if login_successful:
@@ -435,21 +451,8 @@ if st.button("Login"):
         except Exception as e:
             st.error(f"Login failed: {CustomException(e, sys)}")
 
-if st.session_state['logged_in']:
-    otp = st.text_input("Enter OTP:")
-    if st.button("Submit OTP"):
-        try:
-            if otp:
-                st.success("OTP submitted successfully!")
-                st.session_state['otp_entered'] = True
-                # otp_submitter,driver = otp__(driver=st.session_state['driver'], otp=otp)
-                # st.session_state['driver'] = driver
-            else:
-                st.error("Please enter the OTP.")
-        except Exception as e:
-            st.error(f"OTP submission failed: {CustomException(e, sys)}")
 
-if st.session_state['logged_in'] and st.session_state['otp_entered']:
+if st.session_state['logged_in'] :
     st.subheader("Scrape Data from URLs")
     urls_input = st.text_area("Enter URLs to scrape (one per line)")
 
