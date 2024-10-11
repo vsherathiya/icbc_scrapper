@@ -252,7 +252,8 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 drive = result['data']['drive']
                 drive_map = {"Front-wheel Drive":"FWD",
                              "All wheel drive":"AWD",
-                             "Rear-wheel drive":"RWD"}
+                             "Rear-wheel drive":"RWD",
+                             "4x4 w/Rear Wheel Drv":"4x4"}
                 
                 drive = drive_map.get(drive,drive)
                 
@@ -266,7 +267,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             except Exception as e:
                 logger.error(f"Error setting kilometer: {e}")
                 d["kilometer"] = 'none'
-
+            d['mileage_type'] = "MILE"
             try:
                 d["keys"] = '1' if  result['data']['key']=='YES' else '0'
             except Exception as e:
@@ -300,8 +301,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             d["hid_addedtype"] = "2"
             d["hid_addedby"] = "47"
             d["h_inventory"] = "addinventory"
-            d["drivable"] = ""
-            d["engine_runs"] = ""
+            
             try:
                 element = driver.find_element(By.XPATH, '//*[@data-uname="lotdetailEstimatedretailvalue"]').text
                 # print(element)
@@ -360,18 +360,6 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 d["exterior_colour"] = "None"
                 
                 
-                
-            try:    
-                print("=============")                                     
-                element = driver.find_element(By.XPATH, '//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[36]/div/div/span/span').text
-                print(element)
-                d["highlight"] = element
-            except Exception as e:
-    
-                logger.error(f"Error extracting data: {e}")
-                d["highlight"] = "None"
-                
-                
             try:
                 # element = driver.find_element(By.XPATH, '///*[@id="ae-main"]/div/div/div/div[3]/div[4]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]').text
                 d["interior_colour"] = ""
@@ -380,9 +368,23 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 logger.error(f"Error extracting data: {e}")
                 d["interior_colour"] = "None"
                 
+            try:    
+                print("=============")                                     
+                element = driver.find_elements(By.CSS_SELECTOR, ".lot-details-desc.highlights-popover-cntnt")
+                h = ''
+                for ele in element:
+                    h+=' '+ele.text
+                print(element,h)
+                d["highlight"] = h
+            except Exception as e:
+    
+                logger.error(f"Error extracting data: {e}")
+                d["highlight"] = "None"
+                                
+            d["drivable"] = 'Yes' if 'drive' in d['highlight'].lower() else 'No'
+            d["engine_runs"] = 'Yes' if 'run' in d['highlight'].lower() else 'No'
                             
             d["hid_allimages"] = image_sources
-            d['mileage_type'] = "MILE"
 
             
             file_name = f"{d.get('vin','  ')}.json"
