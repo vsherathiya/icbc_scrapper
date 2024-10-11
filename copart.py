@@ -177,7 +177,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             # Safely extract each piece of data using try-except blocks
             d = {}
             try:
-                d["cars_type"] = "11"
+                d["cars_type"] = "14"
             except Exception as e:
                 logger.error(f"Error setting cars_type: {e}")
                 d["cars_type"] = 'none'
@@ -249,7 +249,14 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 
 
             try:
-                d["drive"] = result['data']['drive']
+                drive = result['data']['drive']
+                drive_map = {"Front-wheel Drive":"FWD",
+                             "All wheel drive":"AWD",
+                             "Rear-wheel drive":"RWD"}
+                
+                drive = drive_map.get(drive,drive)
+                
+                d["drive"] = drive
             except Exception as e:
                 logger.error(f"Error setting drive: {e}")
                 d["drive"] = 'none'
