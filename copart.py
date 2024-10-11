@@ -390,7 +390,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 
             print("\n================================",d,"================================\n")
             logger.info(f"\n================================{d}================================\n")
-            # call_api(json.dumps(d)) 
+            call_api(json.dumps(d)) 
             
             
 
