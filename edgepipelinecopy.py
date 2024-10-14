@@ -154,6 +154,7 @@ def extract_data_from_url(driver, url):
     start_time = time()
     try:
         driver.get(url)
+        driver.set_window_size(1366, 768)
         sleep(4)
 
 #vdp > div.overview > h1
