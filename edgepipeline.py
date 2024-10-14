@@ -132,7 +132,7 @@ chrome_options.add_argument("--window-size=1920x1080")
 chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--proxy-server='direct://'")
 chrome_options.add_argument("--proxy-bypass-list=*")
-chrome_options.binary_location = "/usr/bin/chromium-browser"
+# chrome_options.binary_location = "/usr/bin/chromium-browser"
 logger.info(f"{str(db_config)}\n{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
@@ -160,7 +160,7 @@ def extract_data_from_url(driver, url):
         try:
         
             data['heading'] = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div[2]/div[6]/div[1]/div/div/h1"))
+                EC.presence_of_element_located((By.XPATH, '//*[@class="overview"]/h1'))
             ).text
             
         except Exception as e:
@@ -397,8 +397,8 @@ def call(driver,id,password,links):
                         json.dump(formatted_data, json_file, indent=4)
 
                     parsed_data.append(formatted_data)
-                    insert_data(formatted_data)
-                    call_api(json.dumps(formatted_data))
+                    # insert_data(formatted_data)
+                    # call_api(json.dumps(formatted_data))
                     # del formatted_data['hid_allimages']
                     print(f"\n\n {json.dumps(formatted_data)}\n")
                     logger.info(f"\n\n {json.dumps(formatted_data)}\n")
