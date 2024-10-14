@@ -160,7 +160,7 @@ def extract_data_from_url(driver, url):
         try:
         
             data['heading'] = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//*[@class="overview"]/h1'))
+                EC.presence_of_element_located((By.XPATH, '//*[@id="vdp"]/h1'))
             ).text
             
         except Exception as e:
