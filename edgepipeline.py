@@ -154,12 +154,12 @@ def extract_data_from_url(driver, url):
     start_time = time()
     try:
         driver.get(url)
-        sleep(1.5)
+        sleep(4)
 
 #vdp > div.overview > h1
         try:
         
-            data['heading'] = WebDriverWait(driver, 5).until(
+            data['heading'] = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '//*[@class="overview"]/h1'))
             ).text
             
