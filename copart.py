@@ -76,25 +76,43 @@ def login(driver, id, password):
         logger.info("Starting login process")
         driver.get('https://www.copart.ca/login/')
 
+        # Locate the username input field
         try:
-            username_input = driver.find_element(By.XPATH, '//*[@id="username"]')
-            password_input = driver.find_element(By.ID, '//*[@id="password"]')
+            username_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="username"]'))
+            )
+            print(f"Username input field found: {username_input}")
         except Exception as e:
-            logger.error(f"Error finding login fields: {CustomException(e, sys)}")
+            logger.error(f"Error finding username field: {CustomException(e, sys)}")
             return False, driver
-        
+
+        # Locate the password input field
+        try:
+            password_input = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="password"]'))  # Fixed XPATH typo here
+            )
+            print(f"Password input field found: {password_input}")
+        except Exception as e:
+            logger.error(f"Error finding password field: {CustomException(e, sys)}")
+            return False, driver
+
+        # Send login credentials
         username_input.send_keys(id)
         password_input.send_keys(password)
 
+        # Locate the submit button
         try:
-            submit_button = driver.find_element(By.XPATH, '//*[@id="show"]/div[4]/button"]')
+            submit_button = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//*[@id="show"]/div[4]/button'))
+            )
+            print(f"Submit button found: {submit_button}")
             submit_button.click()
         except Exception as e:
             logger.error(f"Error clicking the submit button: {CustomException(e, sys)}")
             return False, driver
 
+        # time.sleep(1.5) can be replaced by WebDriverWait if needed
 
-        # time.sleep(1.5)
         return True, driver
     
     except Exception as e:
@@ -291,7 +309,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 
 
             # Additional keys
-            d["currency"] = "USD"
+            d["currency"] = "CAD"
             d["price"] = "1"
             d["country"] = "1"
             d["state"] = state
@@ -415,7 +433,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 
 # Define XPaths for data extraction
 xpaths = {
-    'vin'                  :"//div[@ng-if='!ukVinNumber']//div[@masking][@number][@lot-number][@field]/@number",
+    'vin'                  :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[2]/div/div/div/span/span',
     'lot'                  : '//*[@data-uname="lotdetailVinvalue"]',
     'engine'               :'//*[@data-uname="lotdetailEnginetype"]',
     "cylinder"             :'//*[@data-uname="lotdetailCylindervalue"]',
@@ -449,9 +467,10 @@ if st.button("Login"):
         st.write("Attempting to log in...")
         try:
             driver = init_driver()
+            driver.set_window_size(1366, 768)
             login_successful, driver = login(driver, id, password)
             st.session_state['driver'] = driver
-            login_successful = True
+            # login_successful = True
             if login_successful:
                 st.session_state['logged_in'] = True
                 st.success("Login successful!")
