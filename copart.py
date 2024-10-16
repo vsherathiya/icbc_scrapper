@@ -77,8 +77,8 @@ def login(driver, id, password):
         driver.get('https://www.copart.ca/login/')
 
         try:
-            username_input = driver.find_element(By.ID, 'username')
-            password_input = driver.find_element(By.ID, 'password')
+            username_input = driver.find_element(By.XPATH, '//*[@id="username"]')
+            password_input = driver.find_element(By.ID, '//*[@id="password"]')
         except Exception as e:
             logger.error(f"Error finding login fields: {CustomException(e, sys)}")
             return False, driver
@@ -87,7 +87,7 @@ def login(driver, id, password):
         password_input.send_keys(password)
 
         try:
-            submit_button = driver.find_element(By.XPATH, '//*[@data-uname="loginSigninmemberbutton"]')
+            submit_button = driver.find_element(By.XPATH, '//*[@id="show"]/div[4]/button"]')
             submit_button.click()
         except Exception as e:
             logger.error(f"Error clicking the submit button: {CustomException(e, sys)}")
@@ -291,7 +291,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 
 
             # Additional keys
-            d["currency"] = "CAD"
+            d["currency"] = "USD"
             d["price"] = "1"
             d["country"] = "1"
             d["state"] = state
@@ -382,7 +382,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 d["highlight"] = "None"
                                 
             d["drivable"] = 'Yes' if 'drive' in d['highlight'].lower() else 'No'
-            d["engine_runs"] = 'Yes' if 'run' or 'engine' in d['highlight'].lower() else 'No'
+            d["engine_runs"] = 'Yes' if 'run' in d['highlight'].lower() else 'No'
                             
             d["hid_allimages"] = image_sources
 
