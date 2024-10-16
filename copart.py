@@ -291,7 +291,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 
 
             # Additional keys
-            d["currency"] = "USD"
+            d["currency"] = "CAD"
             d["price"] = "1"
             d["country"] = "1"
             d["state"] = state
@@ -382,7 +382,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 d["highlight"] = "None"
                                 
             d["drivable"] = 'Yes' if 'drive' in d['highlight'].lower() else 'No'
-            d["engine_runs"] = 'Yes' if 'run' in d['highlight'].lower() else 'No'
+            d["engine_runs"] = 'Yes' if 'run' or 'engine' in d['highlight'].lower() else 'No'
                             
             d["hid_allimages"] = image_sources
 
@@ -415,7 +415,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
 
 # Define XPaths for data extraction
 xpaths = {
-    'vin'                  :'//*[@id="lot-details"]/div/div[2]/div/div/div[1]/div[1]/div[1]/div[2]/div[1]/div/div[2]/div/div/div[2]/div/div/div/span/span',
+    'vin'                  :"//div[@ng-if='!ukVinNumber']//div[@masking][@number][@lot-number][@field]/@number",
     'lot'                  : '//*[@data-uname="lotdetailVinvalue"]',
     'engine'               :'//*[@data-uname="lotdetailEnginetype"]',
     "cylinder"             :'//*[@data-uname="lotdetailCylindervalue"]',

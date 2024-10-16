@@ -9,48 +9,45 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import requests
 import sys, os, json,re
-import base64
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import logging
 from datetime import datetime
 from time import sleep, time
 import mysql.connector
 from mysql.connector import Error
-# Custom exception and logger setup
+# Custom exception and logger_edge setup
 from exception import CustomException, setup_logger
-logger = setup_logger("edgepipeline", "edgepipeline")
+logger_edge = setup_logger("edgepipeline", "edgepipeline")
 app = FastAPI()
 # Database configuration
-# db_config = {
+# db_config_2 = {
 #     'host': 'localhost',  # Replace with your database host
 #     'user': 'root',  # Replace with your database user
 #     'password': '',  # Replace with your database password
 #     'database': 'scrap_data',  # Replace with your database name
 #     'port': 3307
 # }
-db_config = {
+db_config_2 = {
    'host': 'localhost',        # Replace with your database host
    'user': 'icbc_scrapper',             # Replace with your database user
    'password': 'R3RhtTyGEjGD7pZV8WJY6N9oeWRXsAxZ',             # Replace with your database password
    'database': 'icbc_scrapper_DB',   # Replace with your database name
    'port': 3306
 }
-def convert_date_format(date_str):
+def convert_date_format_edge(date_str):
     try:
         input_date = datetime.strptime(date_str, '%a, %m/%d/%y')
         return input_date.strftime('%Y-%m-%d')
     except ValueError as e:
-        logger.error(f"Date conversion error: {e}")
+        logger_edge.error(f"Date conversion error: {e}")
 #         return ''
-driver = None
+driver2 = None
 # Create database tables if they don't exist
-def create_tables():
+def create_tables_edge():
     connection = mysql.connector.connect(
-        host=db_config['host'],
-        user=db_config['user'],
-        password=db_config['password'],
-        database=db_config['database'],
-        port=db_config['port']
+        host=db_config_2['host'],
+        user=db_config_2['user'],
+        password=db_config_2['password'],
+        database=db_config_2['database'],
+        port=db_config_2['port']
     )
     cursor = connection.cursor()
 
@@ -133,118 +130,118 @@ chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--proxy-server='direct://'")
 chrome_options.add_argument("--proxy-bypass-list=*")
 chrome_options.binary_location = "/usr/bin/chromium-browser"
-logger.info(f"{str(db_config)}\n{chrome_options.binary_location}")
+logger_edge.info(f"{str(db_config_2)}\n{chrome_options.binary_location}")
 
 # Function to extract text using explicit wait
-def get_element_text(driver, selector, name):
+def get_element_text_edge(driver2, selector, name):
     try:
-        element = WebDriverWait(driver, 5).until(
+        element = WebDriverWait(driver2, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, selector))
         )
         return element.text
     except Exception as e:
-        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-        logger.error(f"Error extracting {name}: {e}")
+        logger_edge.error(f"Error extracting {name}: {e}")
         return None
 
 # Function to extract data from a single URL
-def extract_data_from_url(driver, url):
+def extract_data_from_url(driver2, url):
     data = {}
     start_time = time()
     try:
-        driver.get(url)
-        driver.set_window_size(1366, 768)
+        driver2.get(url)
+        driver2.set_window_size(1366, 768)
         sleep(4)
 
 #vdp > div.overview > h1
         try:
         
-            data['heading'] = WebDriverWait(driver, 10).until(
+            data['heading'] = WebDriverWait(driver2, 10).until(
                 EC.presence_of_element_located((By.XPATH, '//*[@class="overview"]/h1'))
             ).text
             
         except Exception as e:
-            logger.error(f"Error Occurred at {CustomException(e, sys)}")
+            logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
             print(CustomException(e, sys))
-            logger.error(f"Error extracting heading: {e}")
+            logger_edge.error(f"Error extracting heading: {e}")
             data['heading'] = " "
         
         
-        get_element_text(driver, "#vdp > div.overview > h1","heading")
-        data['run'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.run-number > span", "run")
-        data['vin'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.vin > span", "vin")
-        data['pmr'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.pmr > div > div > span", "pmr")
-        data['kilometer'] = get_element_text(driver, "#vdp > div.overview > div.general-section > div.cell.odometer > span", "kilometer")
+        get_element_text_edge(driver2, "#vdp > div.overview > h1","heading")
+        data['run'] = get_element_text_edge(driver2, "#vdp > div.overview > div.general-section > div.cell.run-number > span", "run")
+        data['vin'] = get_element_text_edge(driver2, "#vdp > div.overview > div.general-section > div.cell.vin > span", "vin")
+        data['pmr'] = get_element_text_edge(driver2, "#vdp > div.overview > div.general-section > div.cell.pmr > div > div > span", "pmr")
+        data['kilometer'] = get_element_text_edge(driver2, "#vdp > div.overview > div.general-section > div.cell.odometer > span", "kilometer")
 
-        data['details'] = extract_section_data(driver, "#vdp > div.sections > div.section.details.closed > div > div", 13)
-        data['auction'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.auction.closed > div > div", 6)
-        data['declarations'] = extract_section_data(driver, "#vdp > div.sections > div.section-group > div.section.declarations.closed > div > div", 4)
+        data['details'] = extract_section_data_edge(driver2, "#vdp > div.sections > div.section.details.closed > div > div", 13)
+        data['auction'] = extract_section_data_edge(driver2, "#vdp > div.sections > div.section-group > div.section.auction.closed > div > div", 6)
+        data['declarations'] = extract_section_data_edge(driver2, "#vdp > div.sections > div.section-group > div.section.declarations.closed > div > div", 4)
         print(data)
-        data['images_bs64'], data['images_links'] = get_image_sources(driver, 'images')
+        data['images_bs64'], data['images_links'] = get_image_sources_edge(driver2, 'images')
 
         elapsed_time = time() - start_time
-        new = get_iframe_data(driver)
+        new = get_iframe_data_edge(driver2)
         data.update(new)
-        logger.info(f"Extracted data from {url} in {elapsed_time:.2f} seconds")
+        logger_edge.info(f"Extracted data from {url} in {elapsed_time:.2f} seconds")
     except Exception as e:
-        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-        logger.error(f"Error extracting data from {url}: {CustomException(e, sys)}")
+        logger_edge.error(f"Error extracting data from {url}: {CustomException(e, sys)}")
     return data
 
 # Function to extract data from specific sections
-def extract_section_data(driver, section_selector, child_count):
+def extract_section_data_edge(driver2, section_selector, child_count):
     section_data = {}
     for i in range(1, child_count + 1):
         label_selector = f"{section_selector} > div:nth-child({i}) > label"
         value_selector = f"{section_selector} > div:nth-child({i}) > span"
-        label_text = get_element_text(driver, label_selector, f"label_{i}")
-        value_text = get_element_text(driver, value_selector, f"value_{i}")
+        label_text = get_element_text_edge(driver2, label_selector, f"label_{i}")
+        value_text = get_element_text_edge(driver2, value_selector, f"value_{i}")
         if label_text and value_text:
             section_data[label_text] = value_text
     return section_data
 
 # Function to get image sources
-def get_image_sources(driver, name):
+def get_image_sources_edge(driver2, name):
     sources_bs64 = []
     sources = []
     try:
-        element = WebDriverWait(driver, 20).until(
+        element = WebDriverWait(driver2, 20).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "fotorama__img"))
         )
         for ele in element:
             img_url = ele.get_attribute('src').replace('AweDc1Ow', 'YwMHgxMjAwOw')
             sources.append(img_url)
-            sources_bs64.append(download_image_as_base64(img_url))
-        elements = WebDriverWait(driver, 20).until(
+            sources_bs64.append(download_image_as_base64_edge(img_url))
+        elements = WebDriverWait(driver2, 20).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.fotorama__thumb.fotorama__loaded.fotorama__loaded--img > img"))
         )
 
         for element in elements:
             img_url = element.get_attribute('src').replace('AweDc1Ow', 'YwMHgxMjAwOw')
             sources.append(img_url)
-            sources_bs64.append(download_image_as_base64(img_url))
+            sources_bs64.append((img_url))
         return sources_bs64, sources
     except Exception as e:
-        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
-        logger.error(f"Error extracting {name}: {e}")
+        logger_edge.error(f"Error extracting {name}: {e}")
     return sources_bs64, sources
 
 # Function to download image as base64
-def download_image_as_base64(image_url):
+def download_image_as_base64_edge(image_url):
     try:
-        logger.info(f"Downloading image from URL: {image_url}")
+        logger_edge.info(f"Downloading image from URL: {image_url}")
         # response = requests.get(image_url)
         # response.raise_for_status()
         print('Done-->',image_url)
         return image_url  # base64.b64encode(response.content).decode('utf-8')
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error downloading image: {CustomException(e, sys)}")
+        logger_edge.error(f"Error downloading image: {CustomException(e, sys)}")
         return ''
 
-def check_first_numeric_value(input_string):
+def check_first_numeric_value_edge(input_string):
     numbers = re.findall(r'\d+', input_string)
     if numbers:
         return "1" if int(numbers[0]) > 0 else "0"
@@ -252,12 +249,12 @@ def check_first_numeric_value(input_string):
         return "0"
 
 
-def get_iframe_data(driver):
+def get_iframe_data_edge(driver2):
     new = {}
     try:
-        iframe = driver.find_element(By.CLASS_NAME, 'cr-iframe')
-        driver.switch_to.frame(iframe)
-        spotlight_fields = driver.find_elements(By.CLASS_NAME, 'cr-spotlight-field')
+        iframe = driver2.find_element(By.CLASS_NAME, 'cr-iframe')
+        driver2.switch_to.frame(iframe)
+        spotlight_fields = driver2.find_elements(By.CLASS_NAME, 'cr-spotlight-field')
         for spotlight_field in spotlight_fields:
             try:
                 inner_divs = spotlight_field.find_elements(By.TAG_NAME, 'div')
@@ -271,7 +268,7 @@ def get_iframe_data(driver):
                         div_text = div_text.replace(span_text, '').strip()
                     if "Engine Runs" in span_texts or "Keys" in span_texts:
                         if"Keys" in span_texts:
-                            div_text = check_first_numeric_value(div_text)
+                            div_text = check_first_numeric_value_edge(div_text)
                         new[span_text]=div_text
                         
                         
@@ -295,7 +292,7 @@ class RequestBody(BaseModel):
     links: List[str]
     
     
-def format_data(data):
+def format_data_edge(data):
     try:
         details = data.get('details', {})
         auction = data.get('auction', {})
@@ -346,7 +343,7 @@ def format_data(data):
         "country": "1",
         "state": auction.get('Location', '').split(", ")[1],
         "city": auction.get('Location', '').split(", ")[0],
-        "auction_date": f"{convert_date_format(auction.get('Sale Date', '').split(' (')[0])}",
+        "auction_date": f"{convert_date_format_edge(auction.get('Sale Date', '').split(' (')[0])}",
         "purchase_option": "0",
         "hid_main_images": "",
         "hid_addedtype": "2",
@@ -362,32 +359,32 @@ def format_data(data):
         # print ('\n--------------------------------\n',formatted_data)
         return formatted_data
     except Exception as e:
-        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
         return {}
     # Define your API endpoint
 
-def call(driver,id,password,links):
+def call_edge(driver2,id,password,links):
     try:
         parsed_data = []
-        driver.get('https://www.edgepipeline.com/components/login')  # Replace with the actual login URL
+        driver2.get('https://www.edgepipeline.com/components/login')  # Replace with the actual login URL
         # Find the username and password input elements and fill them
-        username_input = driver.find_element(By.ID, 'username')
-        password_input = driver.find_element(By.ID, 'password')
+        username_input = driver2.find_element(By.ID, 'username')
+        password_input = driver2.find_element(By.ID, 'password')
         username_input.send_keys(id)  # Replace with actual username
         password_input.send_keys(password)  # Replace with actual password
         # Submit the form
-        submit_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
+        submit_button = driver2.find_element(By.XPATH, "//input[@type='submit' and @value='Sign In']")
         submit_button.click()
         for link in links:
             try:
                 print("\n\n===>Link--"+link+"\n\n")
-                logger.info("\n\n===>Link--"+link+"\n\n")
+                logger_edge.info("\n\n===>Link--"+link+"\n\n")
                 yield "\n\n==>Link--"+link+"\n\n"
-                data = extract_data_from_url(driver, link)
+                data = extract_data_from_url(driver2, link)
                 if data:
                     print(data.keys())
-                    formatted_data = format_data(data)
+                    formatted_data = format_data_edge(data)
                     file_name = f"{formatted_data.get('vin','  ')}.json"
                     file_path = os.path.join("data/edge", file_name)
 
@@ -398,50 +395,45 @@ def call(driver,id,password,links):
                         json.dump(formatted_data, json_file, indent=4)
 
                     parsed_data.append(formatted_data)
-                    insert_data(formatted_data)
-                    call_api(json.dumps(formatted_data))
+                    insert_data_edge(formatted_data)
+                    call_api_edge(json.dumps(formatted_data))
                     # del formatted_data['hid_allimages']
                     print(f"\n\n {json.dumps(formatted_data)}\n")
-                    logger.info(f"\n\n {json.dumps(formatted_data)}\n")
+                    logger_edge.info(f"\n\n {json.dumps(formatted_data)}\n")
                     yield(f"\n\n {json.dumps(formatted_data)}\n")
             except Exception as e:
                 print("error")
-                logger.error("error")
+                logger_edge.error("error")
                 yield "error"
-                logger.error(f"Error Occurred at {CustomException(e, sys)}")
+                logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
                 print(CustomException(e, sys))
     finally:
-        driver.quit()
-        logger.info("\n\ncompleted")
+        driver2.quit()
+        logger_edge.info("\n\ncompleted")
         yield "\n\ncompleted"
 
-def close_browser():
-    if driver:
-        driver.quit()
-        print("Closed the browser.")
-        logger.info("Closed the browser.")
-        return "Stopping Scrapping"
 
 
-@app.post("/parse_links/")
-async def parse_links(request_body: RequestBody):
+
+@app.post("/parse_links_edge/")
+async def parse_links_edge(request_body: RequestBody):
     try:
-        # call(request_body.id,request_body.password)
-        global driver
-        driver = webdriver.Chrome(options=chrome_options)
+        # call_edge(request_body.id,request_body.password)
+        global driver2
+        driver2 = webdriver.Chrome(options=chrome_options)
 
-        return StreamingResponse(call(driver,request_body.id,request_body.password ,request_body.links), media_type="text/plain")
+        return StreamingResponse(call_edge(driver2,request_body.id,request_body.password ,request_body.links), media_type="text/plain")
     except Exception as e:
-                logger.error(f"Error Occurred at {CustomException(e, sys)}")
+                logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
                 print(CustomException(e, sys))
 
 @app.post("/stop-server")
 def stop_server():
-    close_browser()
+    close_browser(driver2)
         
     
-# Function to call an external API
-def call_api(data):
+# Function to call_edge an external API
+def call_api_edge(data):
     try:
         headers = {'accept': 'application/json', 'Content-Type': 'application/json'}
         url = "https://americanauctionaccess.com/edge-scrap-api"
@@ -451,21 +443,21 @@ def call_api(data):
         else:
             raise Exception(f"Failed to send data to API. Status code: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error sending data to API: {CustomException(e, sys)}")
+        logger_edge.error(f"Error sending data to API: {CustomException(e, sys)}")
         print(f"Error sending data to API: {CustomException(e, sys)}")
 # Function to insert data into the database
 # Function to insert data into the database
-def insert_data(data):
+def insert_data_edge(data):
     connection = None
     cursor = None
-    create_tables()
+    create_tables_edge()
     try:
         connection = mysql.connector.connect(
-            host=db_config['host'],
-            user=db_config['user'],
-            password=db_config['password'],
-            database=db_config['database'],
-            port=db_config['port']
+            host=db_config_2['host'],
+            user=db_config_2['user'],
+            password=db_config_2['password'],
+            database=db_config_2['database'],
+            port=db_config_2['port']
         )
         cursor = connection.cursor()
         # Prepare data excluding images
@@ -503,15 +495,17 @@ def insert_data(data):
                 INSERT INTO vehicle_images__ (vin, image_base64) VALUES (%s, %s)
             """, (vehicle_vin, image_base64))
         connection.commit()
-        logger.info(f"Inserted data for vehicle with VIN: {data.get('vin')}")
+        logger_edge.info(f"Inserted data for vehicle with VIN: {data.get('vin')}")
     except Error as e:
-        logger.error(f"Error Occurred at {CustomException(e, sys)}")
+        logger_edge.error(f"Error Occurred at {CustomException(e, sys)}")
         print(CustomException(e, sys))
     finally:
         if cursor:
             cursor.close()
         if connection:
             connection.close()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=3034)
