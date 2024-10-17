@@ -399,8 +399,8 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
                 logger.error(f"Error extracting data: {e}")
                 d["highlight"] = "None"
                                 
-            d["drivable"] = 'Yes' if 'drive' in d['highlight'].lower() else 'No'
-            d["engine_runs"] = 'Yes' if 'run' in d['highlight'].lower() else 'No'
+            d["drivable"] = '1' if 'drive' in d['highlight'].lower() else '0'
+            d["engine_runs"] = '1' if 'run' in d['highlight'].lower() else '0'
                             
             d["hid_allimages"] = image_sources
 
