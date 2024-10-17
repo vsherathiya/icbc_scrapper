@@ -311,7 +311,7 @@ def scrape_links(driver, city, state, urls, json_file='scraped_data.json'):
             # Additional keys
             d["currency"] = "CAD"
             d["price"] = "1"
-            d["country"] = "1"
+            d["country"] = "2"
             d["state"] = state
             d["city"] = city
             d["purchase_option"] = "0"
